@@ -1,0 +1,335 @@
+/* home.css - Versión mejorada */
+
+:root {
+  --cian: #00b4d8;
+  --morado: #6a3093;
+  --arena: #d8b48c;
+  --arena-claro: #f5f0e6;
+  --gris-oscuro: #333333;
+  --blanco: #ffffff;
+}
+
+
+/* Estilos generales */
+.App {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  text-align: center;
+  color: var(--gris-oscuro);
+  background-color: var(--arena-claro);
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+}
+
+
+/* Hero Section */
+.hero {
+  position: relative;
+  background: 
+              url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Colimauno.jpg/270px-Colimauno.jpg');
+  background-size: cover;
+  background-position: center;
+  color: var(--arena-claro);
+  padding: 120px 20px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+  margin-bottom: 40px;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.5); /* Blanco con 50% opacidad */
+  /* El texto mantendrá opacidad 1 (completamente opaco) */
+  border-radius: 15px; /* Ajusta este valor a tu gusto */
+}
+
+.hero p {
+  font-size: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--blanco)
+}
+
+/* Secciones comunes */
+section {
+  padding: 80px 0;
+}
+
+section:nth-child(even) {
+  background-color: var(--arena-claro);
+}
+
+section:nth-child(odd):not(.hero) {
+  background-color: var(--arena-claro);
+}
+
+.section-title {
+  font-size: 2.5rem;
+  margin-bottom: 50px;
+  color: var(--morado);
+  position: relative;
+  display: inline-block;
+}
+
+.section-title:after {
+  content: '';
+  position: absolute;
+  width: 60%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cian), var(--morado));
+  bottom: -15px;
+  left: 20%;
+  border-radius: 2px;
+}
+
+/* Quiénes somos */
+.quienes-somos-content {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+}
+
+.quienes-somos .imagen-container {
+  flex: 1;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.quienes-somos .imagen-container:hover {
+  transform: scale(1.02);
+}
+
+.quienes-somos .imagen-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quienes-somos .texto-container {
+  flex: 1;
+  text-align: left;
+}
+
+.quienes-somos .texto-container p {
+  font-size: 1.2rem;
+  color: var(--gris-oscuro);
+  line-height: 1.8;
+}
+
+/* Por qué elegirnos */
+.porque-elegirnos-content {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+}
+
+.imagen-container {
+  flex: 1;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.imagen-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.imagen-container:hover img {
+  transform: scale(1.05);
+}
+
+.texto-container {
+  flex: 1;
+  text-align: left;
+}
+
+.porque-elegirnos ul {
+  list-style: none;
+  padding: 0;
+}
+
+.porque-elegirnos li {
+  font-size: 1.2rem;
+  padding: 20px;
+  margin-bottom: 15px;
+  background-color: var( --arena-claro);
+  border-left: 4px solid var(--arena);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.porque-elegirnos li:hover {
+  transform: translateX(10px);
+  border-left: 4px solid var(--cian);
+}
+
+.porque-elegirnos li.active {
+  background-color: var(--morado);
+  color: var(--blanco);
+  border-left: 4px solid var(--cian);
+}
+
+/* Ventajas */
+.ventajas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 30px;
+}
+
+.ventaja {
+  background: var(--blanco);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  text-align: left;
+  border-top: 5px solid var(--cian);
+}
+
+.ventaja:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+.ventaja h3 {
+  font-size: 1.5rem;
+  color: var(--morado);
+  margin-bottom: 15px;
+}
+
+.ventaja p {
+  color: var(--gris-oscuro);
+  margin-bottom: 20px;
+}
+
+.ventaja-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+}
+
+.ventaja.expanded .ventaja-content {
+  max-height: 500px;
+}
+
+.image-container {
+  margin-top: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.image-container img {
+  width: 100%;
+  height: auto;
+  transition: transform 0.5s ease;
+}
+
+.ventaja:hover .image-container img {
+  transform: scale(1.05);
+}
+
+/* Ubicación y Extensión */
+.ubicacion, .extension {
+  text-align: center;
+}
+
+.ubicacion p, .extension p {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  font-size: 1.2rem;
+  color: var(--gris-oscuro);
+}
+
+iframe {
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+/* Botones y elementos interactivos */
+.cta-button {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--cian), var(--morado));
+  color: white;
+  padding: 15px 30px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 30px;
+  box-shadow: 0 5px 15px rgba(0, 180, 216, 0.3);
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(106, 48, 147, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .quienes-somos-content, .porque-elegirnos-content {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 80px 20px;
+    min-height: 300px;
+  }
+  
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+  
+  .hero p {
+    font-size: 1.2rem;
+  }
+  
+  .quienes-somos-content, .porque-elegirnos-content {
+    flex-direction: column;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .ventajas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+  
+  .section-title {
+    font-size: 1.8rem;
+  }
+  
+  .container {
+    padding: 40px 15px;
+  }
+}

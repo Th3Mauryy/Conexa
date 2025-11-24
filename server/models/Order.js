@@ -1,0 +1,93 @@
+import mongoose from 'mongoose';
+
+const orderSchema = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    orderItems: [{
+        product: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: 'Product'
+        },
+        name: { type: String, required: true },
+        qty: { type: Number, required: true },
+        price: { type: Number, required: true },
+        image: { type: String, required: true }
+    }],
+    shippingAddress: {
+        street: { type: String, required: true },
+        extNumber: { type: String, required: true },
+        intNumber: { type: String },
+        colony: { type: String, required: true },
+        city: { type: String, required: true },
+        state: { type: String, required: true },
+        zipCode: { type: String, required: true },
+        country: { type: String, required: true, default: 'México' }
+    },
+    paymentMethod: {
+        type: String,
+        required: true,
+        default: 'Transferencia bancaria'
+    },
+    paymentResult: {
+        status: { type: String },
+        update_time: { type: String },
+        email_address: { type: String }
+    },
+    itemsPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    shippingPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    totalPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    isPaid: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    paidAt: {
+        type: Date
+    },
+    isDelivered: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    deliveredAt: {
+        type: Date
+    },
+    status: {
+        type: String,
+        required: true,
+        enum: ['Pendiente', 'Procesando', 'Enviado', 'Entregado', 'Cancelada'],
+        default: 'Pendiente'
+    },
+    trackingNumber: {
+        type: String
+    },
+    reminderSent: {
+        type: Boolean,
+        default: false
+    },
+    notes: {
+        type: String
+    }
+}, {
+    timestamps: true
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+export default Order;

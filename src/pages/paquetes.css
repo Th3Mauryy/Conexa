@@ -1,0 +1,200 @@
+/* Estilos generales */
+.paquetes-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+  line-height: 1.6;
+  background-color: #f5f5f5;
+}
+
+h1, h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-top: 0;
+  color: #3498db;
+}
+
+h2 {
+  font-size: 2rem;
+  padding-bottom: 10px;
+  margin-top: 40px;
+  color: #3498db;
+}
+
+p {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: #555;
+}
+
+ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+
+li {
+  margin-bottom: 10px;
+  color: #555;
+}
+
+/* Estilos para el lema */
+.lema {
+  background-color: #3498db;
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.lema h2 {
+  color: white;
+  margin-bottom: 10px;
+}
+
+.lema p {
+  color: white;
+  font-size: 1.2rem;
+}
+
+/* Estilos para los consejos */
+.consejos {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.consejos h2 {
+  color: #3498db;
+}
+
+.consejos ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.consejos li {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.consejos strong {
+  color: #275250;
+}
+
+/* Estilos para los paquetes */
+.paquete {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.paquete p {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.paquete button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.paquete button:hover {
+  background-color: #2980b9;
+}
+
+/* Estilos para el formulario */
+.formulario-contratar {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.mensaje {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #27ae60;
+  margin-top: 20px;
+}
+
+.mensaje-precios {
+  font-size: 0.9rem; /* Tamaño de fuente más pequeño */
+  color: #555; /* Color gris oscuro */
+  font-style: italic; /* Texto en cursiva */
+  text-align: center; /* Centrar el texto */
+  margin: 10px 0; /* Espaciado superior e inferior */
+}
+
+/* Estilos para el botón de enviar solicitud */
+.btn-enviar-solicitud {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 20px auto 0;
+}
+
+.btn-enviar-solicitud:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-enviar-solicitud:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

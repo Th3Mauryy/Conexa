@@ -1,0 +1,205 @@
+  /* Reset y estilos base */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Navbar compacto */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centra todo el contenido */
+    height: 50px; /* Altura reducida */
+    background-color: #007bff;
+    color: white;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  /* Contenedor principal del navbar */
+  .nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    padding: 0 20px;
+  }
+
+  /* Logo centrado verticalmente */
+  .logo-container {
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  .logo {
+    position: absolute;
+  top: 8px;
+  left: 20px; /* Cambiamos de right a left para colocarlo en la esquina superior izquierda */
+  width: 200px; /* Tamaño grande para pantallas grandes */
+  height: auto;
+  z-index: 10;
+  }
+
+  /* Menú de navegación */
+  .nav-links {
+    display: flex;
+    gap: 25px;
+    margin-left: 30px;
+  }
+
+  nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.20rem; /* Texto más pequeño */
+    font-weight: 500;
+    transition: opacity 0.3s;
+  }
+
+  nav a:hover {
+    opacity: 0.8;
+  }
+
+  /* Espacio para el título debajo */
+  .content-wrapper {
+    padding-top: 20px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .nav-links {
+      gap: 15px;
+      margin-left: 15px;
+    }
+    
+    nav a {
+      font-size: 0.85rem;
+    }
+    
+    .logo {
+      height: 35px;
+    }
+  }
+  /* Estilos para el menú de servicios */
+  .services-container {
+    position: relative;
+  }
+
+  .services-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    min-width: 200px;
+  }
+
+  .services-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .services-menu a {
+    color: #333;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+  }
+
+  .services-menu a:hover {
+    background-color: #f0f0f0;
+    color: #007bff;
+    transform: translateX(5px);
+  }
+
+  /* Menú hamburguesa para móviles */
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-right: 20px;
+  }
+
+  /* Ajustes responsivos */
+  @media (max-width: 1024px) {
+    .logo {
+      width: 140px;
+    }
+    .nav-links {
+      gap: 10px;
+    }
+    nav a {
+      padding: 8px 12px;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .logo {
+      width: 120px;
+    }
+    
+    .nav-links {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      background-color: #007bff;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+      gap: 15px;
+      clip-path: circle(0% at 50% 0);
+      transition: clip-path 0.4s ease;
+    }
+    
+    .nav-links.open {
+      clip-path: circle(150% at 50% 0);
+    }
+    
+    .menu-toggle {
+      display: block;
+      margin-left: auto;
+    }
+    
+    .services-menu {
+      position: static;
+      box-shadow: none;
+      background-color: transparent;
+      display: none;
+    }
+    
+    .services-menu.open {
+      display: flex;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .services-menu a {
+      color: white;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .logo {
+      width: 100px;
+    }
+    .content-wrapper {
+      margin-top: 70px;
+    }
+  }
