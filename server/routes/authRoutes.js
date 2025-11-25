@@ -92,6 +92,7 @@ router.get('/profile', protect, async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
+        console.log('DEBUG: FRONTEND_URL is:', process.env.FRONTEND_URL); // Debug log
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'No existe usuario con ese email' });
