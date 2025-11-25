@@ -2,7 +2,6 @@ import express from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import path from 'path';
-import fs from 'fs';
 
 const router = express.Router();
 
@@ -13,19 +12,8 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configurar Multer para almacenamiento temporal
-const storage = multer.diskStorage({
-    destination(req, file, cb) {
-        const dir = 'uploads/';
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir);
-        }
-        cb(null, 'uploads/');
-    },
-    filename(req, file, cb) {
-        cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-    },
-});
+// Configurar Multer para almacenamiento en MEMORIA (Vercel-compatible)
+const storage = multer.memoryStorage();
 
 function checkFileType(file, cb) {
     const filetypes = /jpg|jpeg|png|webp/;
@@ -41,6 +29,7 @@ function checkFileType(file, cb) {
 
 const upload = multer({
     storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     },
@@ -52,22 +41,23 @@ router.post('/', upload.array('images', 6), async (req, res) => {
             return res.status(400).json({ message: 'No files uploaded' });
         }
 
+        // Upload from memory buffers to Cloudinary
         const uploadPromises = req.files.map(file => {
-            return cloudinary.uploader.upload(file.path, {
-                folder: 'conexa_products'
+            return new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    { folder: 'conexa_products' },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                );
+                uploadStream.end(file.buffer);
             });
         });
 
         const results = await Promise.all(uploadPromises);
-
-        // Eliminar archivos temporales
-        req.files.forEach(file => {
-            if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-            }
-        });
-
         const urls = results.map(result => result.secure_url);
+
         res.send(urls);
     } catch (error) {
         console.error(error);
