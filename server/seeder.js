@@ -19,14 +19,13 @@ const createAdmin = async () => {
 
         const user = await User.create({
             name: 'ConexaAdmin',
-            email: 'admin@conexa.com',
-            password: 'SuperUsuariodelColimote80472!*',
+            email: process.env.ADMIN_EMAIL || 'admin@conexa.com',
+            password: process.env.ADMIN_PASSWORD || 'ChangeThisPassword123!',
             isAdmin: true,
         });
 
         console.log('Admin User Created Successfully!');
-        console.log('Email: admin@conexa.com');
-        console.log('Password: SuperUsuariodelColimote80472!*');
+        console.log(`Email: ${user.email}`);
 
         process.exit();
     } catch (error) {
