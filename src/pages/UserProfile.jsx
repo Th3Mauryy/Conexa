@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import StoreNavbar from '../components/StoreNavbar';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const UserProfile = () => {
     const { user, setUser, loading: authLoading } = useAuth();
@@ -96,6 +97,14 @@ const UserProfile = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validar tamaño ANTES de subir (4MB = 4 * 1024 * 1024 bytes)
+        const maxSize = 4 * 1024 * 1024; // 4MB
+        if (file.size > maxSize) {
+            toast.error('⚠️ La imagen es muy pesada. Máximo 4MB');
+            e.target.value = ''; // Limpiar el input
+            return;
+        }
+
         const reader = new FileReader();
         reader.onloadend = () => {
             setPhotoPreview(reader.result);
@@ -121,11 +130,23 @@ const UserProfile = () => {
                 profilePhoto: data[0]
             }));
 
+            toast.success('✅ Foto actualizada correctamente');
             setUploading(false);
         } catch (error) {
             console.error('Error uploading photo:', error);
-            alert('Error al subir la foto: ' + (error.response?.data?.message || error.message));
+
+            // Revertir a la foto anterior
+            setPhotoPreview(null);
+
+            // Mensaje de error amigable
+            if (error.response?.status === 413) {
+                toast.error('⚠️ La imagen es muy pesada. Máximo 4MB');
+            } else {
+                toast.error('❌ Error al subir la foto. Intenta de nuevo');
+            }
+
             setUploading(false);
+            e.target.value = ''; // Limpiar el input
         }
     };
 
