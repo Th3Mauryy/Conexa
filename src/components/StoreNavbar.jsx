@@ -173,9 +173,17 @@ const StoreNavbar = ({ onSearch }) => {
                                     onClick={() => setMobileMenuOpen(false)}
                                     className="flex items-center gap-3 px-4 py-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
                                 >
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </div>
+                                    {user.profilePhoto ? (
+                                        <img
+                                            src={user.profilePhoto}
+                                            alt={user.name}
+                                            className="w-10 h-10 rounded-full object-cover border-2 border-blue-200"
+                                        />
+                                    ) : (
+                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-white font-bold">
+                                            {user.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
                                     <div>
                                         <p className="text-sm font-bold text-gray-900">{user.name}</p>
                                         <p className="text-xs text-gray-500">Ver perfil</p>
