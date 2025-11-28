@@ -133,13 +133,13 @@ const ProductCard = ({ product, addToCart }) => {
                 </div>
 
                 <Link to={`/product/${product._id}`}>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2 h-[3.5rem]">
                         {product.name}
                     </h3>
                 </Link>
 
                 <p
-                    className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1 min-h-[4.5rem]"
+                    className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1 h-[4.5rem]"
                     title={product.description}
                 >
                     {product.description}
