@@ -18,6 +18,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
+import paypalRoutes from './routes/paypalRoutes.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/paypal', paypalRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

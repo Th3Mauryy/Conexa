@@ -3,8 +3,11 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import Notification from '../models/Notification.js';
 import UserNotification from '../models/UserNotification.js';
+import User from '../models/User.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import sendEmail from '../utils/sendEmail.js';
+import generateTicket from '../utils/generateTicket.js';
+import sendWhatsApp from '../utils/sendWhatsApp.js';
 
 const router = express.Router();
 
@@ -74,30 +77,99 @@ router.post('/', protect, async (req, res) => {
                 console.error('Error creando notificación:', notifError);
             }
 
-            // 4. Enviar email de confirmación
+            // 4. Generar PDF ticket
+            let pdfBuffer = null;
+            try {
+                pdfBuffer = await generateTicket(createdOrder, req.user);
+            } catch (pdfError) {
+                console.error('Error generando PDF:', pdfError);
+            }
+
+            // 5. Enviar email de confirmación al cliente con PDF
             try {
                 const message = `
                     <h1>¡Gracias por tu compra, ${req.user.name}!</h1>
-                    <p>Hemos recibido tu orden #${createdOrder._id}.</p>
+                    <p>Hemos recibido tu orden #${createdOrder._id.toString().slice(-6).toUpperCase()}.</p>
                     <h2>Detalles del pedido:</h2>
                     <ul>
                         ${orderItems.map(item => `<li>${item.name} x ${item.qty} - $${item.price}</li>`).join('')}
                     </ul>
                     <p><strong>Total: $${totalPrice}</strong></p>
-                    <p>Te notificaremos cuando tu pedido sea enviado.</p>
+                    <p>Método de pago: ${paymentMethod}</p>
+                    <p>Te notificaremos cuando tu pedido esté en camino.</p>
+                    <p style="margin-top: 20px; color: #666;"><small>Adjunto encontrarás tu ticket de compra en formato PDF.</small></p>
+                `;
+
+                const emailOptions = {
+                    email: req.user.email,
+                    subject: `✅ Orden Confirmada #${createdOrder._id.toString().slice(-6).toUpperCase()} - Conexa Store`,
+                    html: message
+                };
+
+                // Attach PDF if generated successfully
+                if (pdfBuffer) {
+                    emailOptions.attachments = [{
+                        filename: `ticket_${createdOrder._id}.pdf`,
+                        content: pdfBuffer,
+                        contentType: 'application/pdf'
+                    }];
+                }
+
+                await sendEmail(emailOptions);
+            } catch (emailError) {
+                console.error('Error enviando email de confirmación:', emailError);
+            }
+
+            // 6. Enviar email al admin con datos de entrega
+            try {
+                const adminMessage = `
+                    <h1>🛒 Nueva Orden Recibida</h1>
+                    <h2>Orden #${createdOrder._id.toString().slice(-6).toUpperCase()}</h2>
+                    
+                    <h3>👤 Datos del Cliente:</h3>
+                    <ul>
+                        <li><strong>Nombre:</strong> ${req.user.name}</li>
+                        <li><strong>Email:</strong> ${req.user.email}</li>
+                        <li><strong>Teléfono:</strong> ${req.user.phone || 'No proporcionado'}</li>
+                    </ul>
+                    
+                    <h3>📍 Dirección de Entrega:</h3>
+                    <p>
+                        ${shippingAddress.street} ${shippingAddress.extNumber}${shippingAddress.intNumber ? ', Int. ' + shippingAddress.intNumber : ''}<br/>
+                        ${shippingAddress.colony}, ${shippingAddress.city}<br/>
+                        ${shippingAddress.state}, C.P. ${shippingAddress.zipCode}<br/>
+                        ${shippingAddress.country || 'México'}
+                    </p>
+                    
+                    <h3>📦 Productos (${orderItems.length}):</h3>
+                    <ul>
+                        ${orderItems.map(item => `<li>${item.name} x ${item.qty} - $${item.price}</li>`).join('')}
+                    </ul>
+                    
+                    <h3>💰 Resumen de Pago:</h3>
+                    <ul>
+                        <li>Subtotal: $${itemsPrice}</li>
+                        <li>Envío: $${shippingPrice}</li>
+                        <li>IVA: $${taxPrice}</li>
+                        <li><strong>Total: $${totalPrice}</strong></li>
+                        <li>Método: ${paymentMethod === 'PayPal' ? '💳 PayPal' : '💵 Efectivo'}</li>
+                    </ul>
+                    
+                    <p style="margin-top: 20px; padding: 10px; background: #f0f9ff; border-left: 4px solid #2563eb;">
+                        Inicia sesión en el dashboard de admin para gestionar esta orden.
+                    </p>
                 `;
 
                 await sendEmail({
-                    email: req.user.email,
-                    subject: 'Confirmación de Orden - Conexa Store',
-                    html: message
+                    email: process.env.ADMIN_EMAIL || 'mongdongo@gmail.com',
+                    subject: `🛒 Nueva Orden #${createdOrder._id.toString().slice(-6).toUpperCase()} - ${req.user.name}`,
+                    html: adminMessage
                 });
-            } catch (emailError) {
-                console.error('Error enviando email de confirmación:', emailError);
-                // No fallamos la orden si el email falla, solo logueamos
+            } catch (adminEmailError) {
+                console.error('Error enviando email al admin:', adminEmailError);
             }
 
-            // 5. Crear notificación para el usuario
+            // 7. Crear notificación para el usuario
             try {
                 await UserNotification.create({
                     user: req.user._id,
@@ -237,9 +309,10 @@ router.put('/:id/pay', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
     try {
         const { status, trackingNumber } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.id).populate('user', 'name email phone');
 
         if (order) {
+            const previousStatus = order.status;
             order.status = status;
 
             if (trackingNumber) {
@@ -252,11 +325,88 @@ router.put('/:id/status', async (req, res) => {
             }
 
             const updatedOrder = await order.save();
+
+            // Send notifications when status changes to "En Reparto"
+            if (status === 'En Reparto' && previousStatus !== 'En Reparto' && order.user) {
+                try {
+                    // Email notification
+                    const emailMessage = `
+                        <h1>🚚 Tu pedido va en camino!</h1>
+                        <p>Hola ${order.user.name},</p>
+                        <p>Tu pedido #${order._id.toString().slice(-6).toUpperCase()} está en camino a tu domicilio.</p>
+                        
+                        <h3>📍 Dirección de entrega:</h3>
+                        <p>
+                            ${order.shippingAddress.street} ${order.shippingAddress.extNumber}${order.shippingAddress.intNumber ? ', Int. ' + order.shippingAddress.intNumber : ''}<br/>
+                            ${order.shippingAddress.colony}, ${order.shippingAddress.city}<br/>
+                            ${order.shippingAddress.state}, C.P. ${order.shippingAddress.zipCode}
+                        </p>
+                        
+                        ${trackingNumber ? `<p><strong>Número de seguimiento:</strong> ${trackingNumber}</p>` : ''}
+                        
+                        <p style="margin-top: 20px; padding: 10px; background: #f0f9ff; border-left: 4px solid #2563eb;">
+                            ${order.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo al recibir tu pedido.' : '✅ Tu pago ya fue confirmado.'}
+                        </p>
+                        
+                        <p>¡Gracias por tu compra!</p>
+                    `;
+
+                    await sendEmail({
+                        email: order.user.email,
+                        subject: `🚚 Tu pedido #${order._id.toString().slice(-6).toUpperCase()} va en camino - Conexa Store`,
+                        html: emailMessage
+                    });
+
+                    // WhatsApp notification
+                    if (order.user.phone) {
+                        const whatsappMessage = `🚚 *Tu pedido va en camino!*\n\n` +
+                            `Hola ${order.user.name}, tu pedido #${order._id.toString().slice(-6).toUpperCase()} está en camino.\n\n` +
+                            `📍 *Dirección:* ${order.shippingAddress.street} ${order.shippingAddress.extNumber}, ${order.shippingAddress.city}\n\n` +
+                            `${order.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo ($' + order.totalPrice + ')' : '✅ Pago confirmado'}\n\n` +
+                            `¡Gracias por tu compra en Conexa Store!`;
+
+                        await sendWhatsApp(order.user.phone, whatsappMessage);
+                    }
+
+                    // Create user notification
+                    await UserNotification.create({
+                        user: order.user._id,
+                        type: 'order_shipping',
+                        message: `Tu pedido #${order._id.toString().slice(-6)} está en camino`,
+                        data: {
+                            orderId: order._id,
+                            status: 'En Reparto'
+                        }
+                    });
+                } catch (notifError) {
+                    console.error('Error sending shipping notifications:', notifError);
+                }
+            }
+
+            // Send notification when delivered
+            if (status === 'Entregado' && previousStatus !== 'Entregado' && order.user) {
+                try {
+                    await UserNotification.create({
+                        user: order.user._id,
+                        type: 'order_delivered',
+                        message: `Tu pedido #${order._id.toString().slice(-6)} ha sido entregado`,
+                        data: {
+                            orderId: order._id,
+                            status: 'Entregado',
+                            deliveredAt: order.deliveredAt
+                        }
+                    });
+                } catch (notifError) {
+                    console.error('Error creating delivery notification:', notifError);
+                }
+            }
+
             res.json(updatedOrder);
         } else {
             res.status(404).json({ message: 'Orden no encontrada' });
         }
     } catch (error) {
+        console.error('Error updating order status:', error);
         res.status(500).json({ message: 'Error al actualizar estado' });
     }
 });

@@ -12,6 +12,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@paypal/checkout-server-sdk": "^1.0.3",
         "bcryptjs": "^2.4.3",
         "cloudinary": "^2.8.0",
         "cors": "^2.8.5",
@@ -23,7 +24,9 @@
         "mongoose": "^8.2.1",
         "multer": "^2.0.2",
         "node-cron": "^4.2.1",
-        "nodemailer": "^7.0.10"
+        "nodemailer": "^7.0.10",
+        "pdfkit": "^0.17.2",
+        "twilio": "^5.10.6"
     },
     "devDependencies": {
         "nodemon": "^3.1.0"
