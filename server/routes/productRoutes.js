@@ -56,17 +56,27 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { name, price, description, image, images, brand, category, countInStock } = req.body;
 
+    console.log('🔧 UPDATE PRODUCT:', {
+        id: req.params.id.slice(-6),
+        countInStock_received: countInStock,
+        countInStock_type: typeof countInStock
+    });
+
     const product = await Product.findById(req.params.id);
 
     if (product) {
+        console.log(' Previous stock:', product.countInStock);
+
         product.name = name || product.name;
-        product.price = price || product.price;
+        product.price = price !== undefined ? Number(price) : product.price;
         product.description = description || product.description;
         product.image = image || product.image;
         product.images = images || product.images;
         product.brand = brand || product.brand;
         product.category = category || product.category;
-        product.countInStock = countInStock;
+        product.countInStock = countInStock !== undefined ? Number(countInStock) : product.countInStock;
+
+        console.log('✅ New stock:', product.countInStock);
 
         const updatedProduct = await product.save();
         res.json(updatedProduct);
