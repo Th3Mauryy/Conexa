@@ -60,13 +60,21 @@ const AdminDashboard = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const notificationRef = useRef(null);
 
-    const { user, logout } = useAuth();
+    const { user, logout, loading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchProducts();
-        fetchNotifications();
-    }, []);
+        if (!loading && (!user || !user.isAdmin)) {
+            navigate('/login');
+        }
+    }, [user, loading, navigate]);
+
+    useEffect(() => {
+        if (user && user.isAdmin) {
+            fetchProducts();
+            fetchNotifications();
+        }
+    }, [user]);
 
     useEffect(() => {
         // Close notifications dropdown when clicking outside

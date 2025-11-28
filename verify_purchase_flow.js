@@ -101,7 +101,12 @@ const verifyFlow = async () => {
             data: {
                 orderId: orderId,
                 nombre: 'Mauricio Guadalupe Mendoza Bueno',
-                total: PRODUCT_PRICE
+                telefono: '3123108241',
+                correo: 'mendoza.mauriciogbueno@gmail.com',
+                total: PRODUCT_PRICE,
+                paymentMethod: 'PayPal',
+                items: 1,
+                direccion: 'Calle Ricardo Guzman Nava, Ext 1198, Int Depto 4B, Villa de Álvarez, Colima'
             },
             read: false,
             createdAt: new Date()
