@@ -259,6 +259,7 @@ const AdminDashboard = () => {
     const fetchOrders = async () => {
         try {
             const { data } = await api.get('/orders');
+            console.log('📦 Orders fetched:', data.map(o => ({ id: o._id.slice(-6), status: o.status })));
             setOrders(data);
         } catch (error) {
             console.error('Error fetching orders:', error);
