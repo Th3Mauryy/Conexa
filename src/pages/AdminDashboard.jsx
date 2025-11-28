@@ -60,7 +60,7 @@ const AdminDashboard = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const notificationRef = useRef(null);
 
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {

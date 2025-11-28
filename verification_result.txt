@@ -1,0 +1,18 @@
+✅ MongoDB Connected
+
+--- 1. Creating Test Order ---
+✅ Order Created: 69297810ab7d5edec8e53a3d
+
+--- 2. Simulating PayPal Payment ---
+✅ Order marked as PAID
+✅ Product Stock decreased and Sold count increased
+✅ Admin Notification Created
+
+--- 3. Verifying Data ---
+Order Status: Pagado (Expected: Pagado)
+Order Paid: true (Expected: true)
+Product Stock: 2
+Notification Found: true
+
+✅ VERIFICATION COMPLETE: The backend flow for Order -> Payment -> Notification is valid.
+⚠️ NOTE: This script simulated the backend logic. In the real app, the PayPal webhook/callback triggers these updates.
