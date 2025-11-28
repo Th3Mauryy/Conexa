@@ -868,6 +868,13 @@ const AdminDashboard = () => {
                                 <span className="hidden sm:inline">Ver Tienda</span>
                             </Link>
                             <span className="text-gray-500 text-sm md:text-base hidden sm:inline">Hola, {user?.name}</span>
+                            <button
+                                onClick={logout}
+                                className="text-red-600 hover:text-red-800 font-medium text-sm md:text-base flex items-center"
+                            >
+                                <svg className="w-4 h-4 md:w-5 md:h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                                <span className="hidden sm:inline">Cerrar Sesión</span>
+                            </button>
                         </div>
                     </div>
                 </div>
