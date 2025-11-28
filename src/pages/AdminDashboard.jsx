@@ -388,6 +388,183 @@ const AdminDashboard = () => {
     const generatePDF = async () => {
         try {
             const doc = new jsPDF();
+            let yPosition = 20;
+
+            // Title
+            doc.setFontSize(20);
+            doc.setTextColor(30, 64, 175); // Blue color
+            doc.text('Reporte de Inventario - Conexa', 14, yPosition);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            yPosition += 8;
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, yPosition);
+
+            // Line separator
+            yPosition += 5;
+            doc.setDrawColor(200, 200, 200);
+            doc.line(14, yPosition, 196, yPosition);
+            yPosition += 10;
+
+            // === SECCIÓN 1: RESUMEN EJECUTIVO ===
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Resumen Ejecutivo', 14, yPosition);
+            yPosition += 8;
+
+            // Calculate statistics
+            const totalProducts = products.length;
+            const totalStock = products.reduce((sum, p) => sum + p.countInStock, 0);
+            const totalValue = products.reduce((sum, p) => sum + (p.price * p.countInStock), 0);
+            const avgPrice = totalProducts > 0 ? products.reduce((sum, p) => sum + p.price, 0) / totalProducts : 0;
+            const lowStockProducts = products.filter(p => p.countInStock < 5).length;
+            const outOfStock = products.filter(p => p.countInStock === 0).length;
+
+            // Stats boxes
+            doc.setFontSize(10);
+            const statsData = [
+                ['Total Productos:', totalProducts],
+                ['Stock Total:', totalStock + ' unidades'],
+                ['Valor Inventario:', '$' + totalValue.toLocaleString('es-MX')],
+                ['Precio Promedio:', '$' + avgPrice.toLocaleString('es-MX')],
+                ['Stock Bajo (<5):', lowStockProducts],
+                ['Sin Stock:', outOfStock]
+            ];
+
+            autoTable(doc, {
+                body: statsData,
+                startY: yPosition,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2 },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 50 },
+                    1: { textColor: [30, 64, 175] }
+                }
+            });
+
+            yPosition = doc.lastAutoTable.finalY + 10;
+
+            // === SECCIÓN 2: TOP 7 PRODUCTOS CON MÁS STOCK ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Top 7 - Mayor Stock', 14, yPosition);
+            yPosition += 5;
+
+            const topStock = [...products]
+                .sort((a, b) => b.countInStock - a.countInStock)
+                .slice(0, 7);
+
+            const topStockData = topStock.map(p => [
+                p.name,
+                p.countInStock + ' unidades',
+                '$' + (p.price * p.countInStock).toLocaleString('es-MX')
+            ]);
+
+            autoTable(doc, {
+                head: [['Producto', 'Stock', 'Valor']],
+                body: topStockData,
+                startY: yPosition,
+                theme: 'striped',
+                headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+                styles: { fontSize: 9 },
+                columnStyles: {
+                    0: { cellWidth: 90 }
+                }
+            });
+
+            yPosition = doc.lastAutoTable.finalY + 10;
+
+            // === SECCIÓN 3: PRODUCTOS CON STOCK BAJO (Necesitan Reabastecimiento) ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.text('Stock Bajo - Requiere Reabastecimiento', 14, yPosition);
+            yPosition += 5;
+
+            const lowStock = products
+                .filter(p => p.countInStock > 0 && p.countInStock < 5)
+                .sort((a, b) => a.countInStock - b.countInStock);
+
+            if (lowStock.length > 0) {
+                const lowStockData = lowStock.map(p => [
+                    p.name,
+                    p.countInStock + ' unidades',
+                    p.category,
+                    '$' + p.price.toLocaleString('es-MX')
+                ]);
+
+                autoTable(doc, {
+                    head: [['Producto', 'Stock', 'Categoría', 'Precio']],
+                    body: lowStockData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: { fillColor: [234, 179, 8], textColor: 0 },
+                    styles: { fontSize: 9 },
+                    columnStyles: {
+                        0: { cellWidth: 80 }
+                    }
+                });
+
+                yPosition = doc.lastAutoTable.finalY + 10;
+            } else {
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text('No hay productos con stock bajo', 14, yPosition + 5);
+                yPosition += 15;
+            }
+
+            // === SECCIÓN 4: SIN STOCK ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            const noStock = products.filter(p => p.countInStock === 0);
+
+            if (noStock.length > 0) {
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.text('Productos Sin Stock', 14, yPosition);
+                yPosition += 5;
+
+                const noStockData = noStock.map(p => [
+                    p.name,
+                    p.category,
+                    '$' + p.price.toLocaleString('es-MX')
+                ]);
+
+                autoTable(doc, {
+                    head: [['Producto', 'Categoría', 'Precio']],
+                    body: noStockData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: { fillColor: [220, 38, 38], textColor: 255 },
+                    styles: { fontSize: 9 },
+                    columnStyles: {
+                        0: { cellWidth: 90 }
+                    }
+                });
+
+                yPosition = doc.lastAutoTable.finalY + 10;
+            }
+
+            // === SECCIÓN 5: INVENTARIO COMPLETO ===
+            doc.addPage();
+            yPosition = 20;
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Inventario Completo', 14, yPosition);
+            yPosition += 5;
+
             // Load images
             const getBase64Image = (url) => {
                 return new Promise((resolve) => {
