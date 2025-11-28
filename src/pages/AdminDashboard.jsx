@@ -38,6 +38,12 @@ const AdminDashboard = () => {
     const [editCategoryName, setEditCategoryName] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
 
+    // Order Status Management State
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [showDeliveryConfirmModal, setShowDeliveryConfirmModal] = useState(false);
+    const [orderToUpdate, setOrderToUpdate] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState('');
+
     const openWhatsApp = (phone) => {
         if (!phone) return;
         const cleanPhone = phone.replace(/\D/g, '');
@@ -270,6 +276,29 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error('Error fetching orders:', error);
         }
+    };
+
+    const openStatusModal = (order) => {
+        setOrderToUpdate(order);
+        setSelectedStatus(order.status);
+        setShowStatusModal(true);
+    };
+
+    const handleStatusSubmit = () => {
+        if (selectedStatus === 'Entregado') {
+            setShowStatusModal(false);
+            setShowDeliveryConfirmModal(true);
+        } else {
+            updateOrderStatus(orderToUpdate._id, selectedStatus);
+            setShowStatusModal(false);
+            setOrderToUpdate(null);
+        }
+    };
+
+    const confirmDeliveryStatus = () => {
+        updateOrderStatus(orderToUpdate._id, 'Entregado');
+        setShowDeliveryConfirmModal(false);
+        setOrderToUpdate(null);
     };
 
     const updateOrderStatus = async (orderId, newStatus) => {
@@ -1375,25 +1404,12 @@ const AdminDashboard = () => {
                                             )}
                                         </td>
                                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                                            {order.status === 'Pendiente' || order.status === 'Procesando' ? (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order._id, 'En Reparto')}
-                                                    className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-xs"
-                                                >
-                                                    🚚 Iniciar Reparto
-                                                </button>
-                                            ) : order.status === 'En Reparto' ? (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order._id, 'Entregado')}
-                                                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs"
-                                                >
-                                                    ✅ Marcar Entregado
-                                                </button>
-                                            ) : order.status === 'Cancelada' ? (
-                                                <span className="text-red-500 text-xs font-medium">❌ Cancelada</span>
-                                            ) : (
-                                                <span className="text-green-600 text-xs font-medium">✅ Completado</span>
-                                            )}
+                                            <button
+                                                onClick={() => openStatusModal(order)}
+                                                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs flex items-center gap-1"
+                                            >
+                                                <span>⚙️</span> Gestionar
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -1498,6 +1514,97 @@ const AdminDashboard = () => {
                                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium"
                             >
                                 Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Status Selection Modal */}
+            {showStatusModal && orderToUpdate && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Gestionar Estado</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                            Orden <span className="font-mono font-bold">#{orderToUpdate._id.slice(-6).toUpperCase()}</span>
+                        </p>
+
+                        <div className="space-y-3 mb-6">
+                            <label className="block text-sm font-medium text-gray-700">Seleccionar Nuevo Estado:</label>
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5 border"
+                            >
+                                <option value="Pendiente">🟡 Pendiente</option>
+                                <option value="Procesando">🔵 Procesando</option>
+                                <option value="En Reparto">🟣 En Reparto</option>
+                                <option value="Entregado">🟢 Entregado</option>
+                                <option value="Cancelada">🔴 Cancelada</option>
+                            </select>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowStatusModal(false);
+                                    setOrderToUpdate(null);
+                                }}
+                                className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleStatusSubmit}
+                                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                            >
+                                Actualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delivery Confirmation Warning Modal */}
+            {showDeliveryConfirmModal && orderToUpdate && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border-l-4 border-green-500">
+                        <div className="flex items-start gap-4 mb-4">
+                            <div className="bg-green-100 p-3 rounded-full">
+                                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900">¿Confirmar Entrega?</h3>
+                                <p className="text-gray-600 mt-1">
+                                    Estás a punto de marcar la orden <span className="font-mono font-bold">#{orderToUpdate._id.slice(-6).toUpperCase()}</span> como <span className="font-bold text-green-600">Entregado</span>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-yellow-50 p-4 rounded-lg mb-6 border border-yellow-100">
+                            <p className="text-sm text-yellow-800">
+                                ⚠️ <strong>Importante:</strong> Esto notificará al usuario y habilitará la opción para que pueda calificar los productos. Esta acción no se puede deshacer fácilmente.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowDeliveryConfirmModal(false);
+                                    // Optionally reopen the status modal or just close everything
+                                    setShowStatusModal(true);
+                                }}
+                                className="px-5 py-2.5 rounded-xl text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeliveryStatus}
+                                className="px-5 py-2.5 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 shadow-lg hover:shadow-green-500/30 transition-all transform hover:-translate-y-0.5"
+                            >
+                                Sí, Marcar Entregado
                             </button>
                         </div>
                     </div>
