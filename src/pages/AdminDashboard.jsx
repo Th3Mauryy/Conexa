@@ -1080,6 +1080,9 @@ const AdminDashboard = () => {
                                             {order.status === 'Entregado' && (
                                                 <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">🟢 Entregado</span>
                                             )}
+                                            {order.status === 'Cancelada' && (
+                                                <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">🔴 Cancelada</span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-4 whitespace-nowrap text-sm">
                                             {order.status === 'Pendiente' || order.status === 'Procesando' ? (
@@ -1096,8 +1099,10 @@ const AdminDashboard = () => {
                                                 >
                                                     ✅ Marcar Entregado
                                                 </button>
+                                            ) : order.status === 'Cancelada' ? (
+                                                <span className="text-red-500 text-xs font-medium">❌ Cancelada</span>
                                             ) : (
-                                                <span className="text-gray-400 text-xs">Completado</span>
+                                                <span className="text-green-600 text-xs font-medium">✅ Completado</span>
                                             )}
                                         </td>
                                     </tr>

@@ -411,6 +411,21 @@ router.put('/:id/status', async (req, res) => {
     }
 });
 
+// @route   GET /api/orders
+// @desc    Get all orders (Admin)
+// @access  Private/Admin
+router.get('/', async (req, res) => {
+    try {
+        const orders = await Order.find({})
+            .populate('user', 'name email phone')
+            .sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'Error al obtener órdenes' });
+    }
+});
+
 // @route   DELETE /api/orders/:id
 // @desc    Delete order
 // @access  Private/Admin

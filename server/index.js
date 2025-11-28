@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 
 import connectDB from './db.js';
 import startCronJobs from './cron.js';
+import { startAutoCancelJob } from './utils/autoCancelOrders.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
@@ -73,6 +74,7 @@ const startServer = async () => {
     try {
         await connectDB();
         startCronJobs(); // Start background tasks after DB is connected
+        startAutoCancelJob(); // Start auto-cancel job for pending orders
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
