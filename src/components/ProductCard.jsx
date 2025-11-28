@@ -139,7 +139,7 @@ const ProductCard = ({ product, addToCart }) => {
                 </Link>
 
                 <p
-                    className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1 h-[4.5rem]"
+                    className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1 h-[4.5rem] overflow-hidden"
                     title={product.description}
                 >
                     {product.description}
