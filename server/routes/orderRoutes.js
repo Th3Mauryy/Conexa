@@ -386,6 +386,7 @@ router.put('/:id/status', async (req, res) => {
             // Send notification when delivered
             if (status === 'Entregado' && previousStatus !== 'Entregado' && order.user) {
                 try {
+                    // 1. Notify order delivery
                     await UserNotification.create({
                         user: order.user._id,
                         type: 'order_delivered',
@@ -396,8 +397,24 @@ router.put('/:id/status', async (req, res) => {
                             deliveredAt: order.deliveredAt
                         }
                     });
+
+                    // 2. Create "Rate Product" notifications for EACH item
+                    for (const item of order.orderItems) {
+                        await UserNotification.create({
+                            user: order.user._id,
+                            type: 'rate_product',
+                            message: `¡Tu producto ${item.name} ha sido entregado! Califícalo ahora.`,
+                            data: {
+                                productId: item.product,
+                                productName: item.name,
+                                image: item.image,
+                                orderId: order._id
+                            }
+                        });
+                    }
+
                 } catch (notifError) {
-                    console.error('Error creating delivery notification:', notifError);
+                    console.error('Error creating delivery/review notifications:', notifError);
                 }
             }
 

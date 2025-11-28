@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import ReviewModal from './ReviewModal';
 
 const UserNotificationBell = () => {
     const { user } = useAuth();
@@ -9,6 +10,11 @@ const UserNotificationBell = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Review Modal State
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [selectedProductForReview, setSelectedProductForReview] = useState(null);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
 
     useEffect(() => {
         if (user && !user.isAdmin) {
@@ -58,6 +64,24 @@ const UserNotificationBell = () => {
         }
     };
 
+    const handleNotificationClick = (notification) => {
+        if (!notification.read) {
+            markAsRead(notification._id);
+        }
+
+        if (notification.type === 'rate_product') {
+            setSelectedProductForReview({
+                productId: notification.data.productId,
+                name: notification.data.productName,
+                image: notification.data.image,
+                userId: user._id
+            });
+            setSelectedOrderId(notification.data.orderId);
+            setIsReviewModalOpen(true);
+            setIsOpen(false); // Close dropdown
+        }
+    };
+
     const getNotificationIcon = (type) => {
         switch (type) {
             case 'order_created':
@@ -72,6 +96,8 @@ const UserNotificationBell = () => {
                 return '📦';
             case 'order_cancelled':
                 return '❌';
+            case 'rate_product':
+                return '⭐';
             default:
                 return '📬';
         }
@@ -124,7 +150,7 @@ const UserNotificationBell = () => {
                             notifications.map((notification) => (
                                 <div
                                     key={notification._id}
-                                    onClick={() => !notification.read && markAsRead(notification._id)}
+                                    onClick={() => handleNotificationClick(notification)}
                                     className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50' : ''
                                         }`}
                                 >
@@ -142,7 +168,7 @@ const UserNotificationBell = () => {
                                                     minute: '2-digit'
                                                 })}
                                             </p>
-                                            {notification.data?.orderId && (
+                                            {notification.data?.orderId && notification.type !== 'rate_product' && (
                                                 <Link
                                                     to="/order-history"
                                                     className="text-xs text-blue-600 hover:underline mt-1 inline-block"
@@ -150,6 +176,11 @@ const UserNotificationBell = () => {
                                                 >
                                                     Ver pedidos →
                                                 </Link>
+                                            )}
+                                            {notification.type === 'rate_product' && (
+                                                <span className="text-xs text-yellow-600 font-bold mt-1 inline-block">
+                                                    ¡Calificar ahora! →
+                                                </span>
                                             )}
                                         </div>
                                         {!notification.read && (
@@ -175,6 +206,13 @@ const UserNotificationBell = () => {
                     )}
                 </div>
             )}
+
+            <ReviewModal
+                isOpen={isReviewModalOpen}
+                onClose={() => setIsReviewModalOpen(false)}
+                product={selectedProductForReview}
+                orderId={selectedOrderId}
+            />
         </div>
     );
 };
