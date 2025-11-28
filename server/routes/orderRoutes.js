@@ -309,7 +309,9 @@ router.put('/:id/pay', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
     try {
         const { status, trackingNumber } = req.body;
-        const order = await Order.findById(req.params.id).populate('user', 'name email phone');
+
+        // 1. Fetch order WITHOUT populate to ensure save works even if user is deleted
+        const order = await Order.findById(req.params.id);
 
         if (order) {
             const previousStatus = order.status;
@@ -326,55 +328,64 @@ router.put('/:id/status', async (req, res) => {
 
             const updatedOrder = await order.save();
 
+            // 2. Fetch order WITH populate for notifications
+            // We use a separate query so we don't mess up the save above
+            const orderForNotify = await Order.findById(req.params.id).populate('user', 'name email phone');
+
+            if (!orderForNotify || !orderForNotify.user) {
+                console.log('User not found for order, skipping notifications');
+                return res.json(updatedOrder);
+            }
+
             // Send notifications when status changes to "En Reparto"
-            if (status === 'En Reparto' && previousStatus !== 'En Reparto' && order.user) {
+            if (status === 'En Reparto' && previousStatus !== 'En Reparto') {
                 try {
                     // Email notification
                     const emailMessage = `
                         <h1>🚚 Tu pedido va en camino!</h1>
-                        <p>Hola ${order.user.name},</p>
-                        <p>Tu pedido #${order._id.toString().slice(-6).toUpperCase()} está en camino a tu domicilio.</p>
+                        <p>Hola ${orderForNotify.user.name},</p>
+                        <p>Tu pedido #${orderForNotify._id.toString().slice(-6).toUpperCase()} está en camino a tu domicilio.</p>
                         
                         <h3>📍 Dirección de entrega:</h3>
                         <p>
-                            ${order.shippingAddress.street} ${order.shippingAddress.extNumber}${order.shippingAddress.intNumber ? ', Int. ' + order.shippingAddress.intNumber : ''}<br/>
-                            ${order.shippingAddress.colony}, ${order.shippingAddress.city}<br/>
-                            ${order.shippingAddress.state}, C.P. ${order.shippingAddress.zipCode}
+                            ${orderForNotify.shippingAddress.street} ${orderForNotify.shippingAddress.extNumber}${orderForNotify.shippingAddress.intNumber ? ', Int. ' + orderForNotify.shippingAddress.intNumber : ''}<br/>
+                            ${orderForNotify.shippingAddress.colony}, ${orderForNotify.shippingAddress.city}<br/>
+                            ${orderForNotify.shippingAddress.state}, C.P. ${orderForNotify.shippingAddress.zipCode}
                         </p>
                         
                         ${trackingNumber ? `<p><strong>Número de seguimiento:</strong> ${trackingNumber}</p>` : ''}
                         
                         <p style="margin-top: 20px; padding: 10px; background: #f0f9ff; border-left: 4px solid #2563eb;">
-                            ${order.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo al recibir tu pedido.' : '✅ Tu pago ya fue confirmado.'}
+                            ${orderForNotify.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo al recibir tu pedido.' : '✅ Tu pago ya fue confirmado.'}
                         </p>
                         
                         <p>¡Gracias por tu compra!</p>
                     `;
 
                     await sendEmail({
-                        email: order.user.email,
-                        subject: `🚚 Tu pedido #${order._id.toString().slice(-6).toUpperCase()} va en camino - Conexa Store`,
+                        email: orderForNotify.user.email,
+                        subject: `🚚 Tu pedido #${orderForNotify._id.toString().slice(-6).toUpperCase()} va en camino - Conexa Store`,
                         html: emailMessage
                     });
 
                     // WhatsApp notification
-                    if (order.user.phone) {
+                    if (orderForNotify.user.phone) {
                         const whatsappMessage = `🚚 *Tu pedido va en camino!*\n\n` +
-                            `Hola ${order.user.name}, tu pedido #${order._id.toString().slice(-6).toUpperCase()} está en camino.\n\n` +
-                            `📍 *Dirección:* ${order.shippingAddress.street} ${order.shippingAddress.extNumber}, ${order.shippingAddress.city}\n\n` +
-                            `${order.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo ($' + order.totalPrice + ')' : '✅ Pago confirmado'}\n\n` +
+                            `Hola ${orderForNotify.user.name}, tu pedido #${orderForNotify._id.toString().slice(-6).toUpperCase()} está en camino.\n\n` +
+                            `📍 *Dirección:* ${orderForNotify.shippingAddress.street} ${orderForNotify.shippingAddress.extNumber}, ${orderForNotify.shippingAddress.city}\n\n` +
+                            `${orderForNotify.paymentMethod === 'Efectivo' ? '💵 Recuerda tener el efectivo listo ($' + orderForNotify.totalPrice + ')' : '✅ Pago confirmado'}\n\n` +
                             `¡Gracias por tu compra en Conexa Store!`;
 
-                        await sendWhatsApp(order.user.phone, whatsappMessage);
+                        await sendWhatsApp(orderForNotify.user.phone, whatsappMessage);
                     }
 
                     // Create user notification
                     await UserNotification.create({
-                        user: order.user._id,
+                        user: orderForNotify.user._id,
                         type: 'order_shipping',
-                        message: `Tu pedido #${order._id.toString().slice(-6)} está en camino`,
+                        message: `Tu pedido #${orderForNotify._id.toString().slice(-6)} está en camino`,
                         data: {
-                            orderId: order._id,
+                            orderId: orderForNotify._id,
                             status: 'En Reparto'
                         }
                     });
@@ -384,31 +395,31 @@ router.put('/:id/status', async (req, res) => {
             }
 
             // Send notification when delivered
-            if (status === 'Entregado' && previousStatus !== 'Entregado' && order.user) {
+            if (status === 'Entregado' && previousStatus !== 'Entregado') {
                 try {
                     // 1. Notify order delivery
                     await UserNotification.create({
-                        user: order.user._id,
+                        user: orderForNotify.user._id,
                         type: 'order_delivered',
-                        message: `Tu pedido #${order._id.toString().slice(-6)} ha sido entregado`,
+                        message: `Tu pedido #${orderForNotify._id.toString().slice(-6)} ha sido entregado`,
                         data: {
-                            orderId: order._id,
+                            orderId: orderForNotify._id,
                             status: 'Entregado',
-                            deliveredAt: order.deliveredAt
+                            deliveredAt: orderForNotify.deliveredAt
                         }
                     });
 
                     // 2. Create "Rate Product" notifications for EACH item
-                    for (const item of order.orderItems) {
+                    for (const item of orderForNotify.orderItems) {
                         await UserNotification.create({
-                            user: order.user._id,
+                            user: orderForNotify.user._id,
                             type: 'rate_product',
                             message: `¡Tu producto ${item.name} ha sido entregado! Califícalo ahora.`,
                             data: {
                                 productId: item.product,
                                 productName: item.name,
                                 image: item.image,
-                                orderId: order._id
+                                orderId: orderForNotify._id
                             }
                         });
                     }
@@ -424,7 +435,7 @@ router.put('/:id/status', async (req, res) => {
         }
     } catch (error) {
         console.error('Error updating order status:', error);
-        res.status(500).json({ message: 'Error al actualizar estado' });
+        res.status(500).json({ message: 'Error al actualizar estado: ' + error.message });
     }
 });
 

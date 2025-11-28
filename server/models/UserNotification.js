@@ -9,7 +9,7 @@ const userNotificationSchema = mongoose.Schema({
     type: {
         type: String,
         required: true,
-        enum: ['order_created', 'payment_reminder', 'payment_confirmed', 'order_shipped', 'order_delivered', 'order_cancelled'],
+        enum: ['order_created', 'payment_reminder', 'payment_confirmed', 'order_shipped', 'order_delivered', 'order_cancelled', 'rate_product', 'order_shipping'],
         default: 'order_created'
     },
     message: {
