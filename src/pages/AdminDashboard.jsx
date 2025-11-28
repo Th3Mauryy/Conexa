@@ -21,8 +21,6 @@ const AdminDashboard = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editProductId, setEditProductId] = useState(null);
     const [categories, setCategories] = useState(['Electrónica', 'Cámaras', 'Laptops', 'Accesorios', 'Paneles Solares']);
-    const [newCategory, setNewCategory] = useState('');
-    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
     //
@@ -199,7 +197,7 @@ const AdminDashboard = () => {
             image: images.length > 0 ? images[0] : image, // Ensure main image is set
             images,
             brand,
-            category: showNewCategoryInput ? newCategory : category,
+            category,
             countInStock: Number(countInStock),
         };
 
@@ -642,46 +640,17 @@ const AdminDashboard = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Categoría</label>
-                                    {!showNewCategoryInput ? (
-                                        <div className="flex gap-2">
-                                            <select
-                                                value={category}
-                                                onChange={(e) => setCategory(e.target.value)}
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                                                required
-                                            >
-                                                <option value="">Seleccionar...</option>
-                                                {categories.map((cat) => (
-                                                    <option key={cat} value={cat}>{cat}</option>
-                                                ))}
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewCategoryInput(true)}
-                                                className="mt-1 p-2 bg-gray-100 rounded-md hover:bg-gray-200"
-                                                title="Nueva Categoría"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={newCategory}
-                                                onChange={(e) => setNewCategory(e.target.value)}
-                                                placeholder="Nueva categoría"
-                                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewCategoryInput(false)}
-                                                className="mt-1 p-2 bg-gray-100 rounded-md hover:bg-gray-200"
-                                            >
-                                                x
-                                            </button>
-                                        </div>
-                                    )}
+                                    <select
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                                        required
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        {categories.map((cat) => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>
