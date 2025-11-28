@@ -1,0 +1,9 @@
+✅ MongoDB Connected
+--- REAL PRODUCT ---
+Name: Laptop Gamer MSI Thin 15.6" 
+Image: https://res.cloudinary.com/dz6q5evcy/image/upload/v1763738843/conexa_products/ac7bh6eod20qfyvgkhv9.webp
+
+--- LATEST ORDER ---
+ID: new ObjectId('69297998fedd4567313cfd94')
+Order Item Name: Laptop Gamer MSI Thin 15.6"
+Order Item Image: https://res.cloudinary.com/dby8b3cre/image/upload/v1732486886/products/laptop_msi_thin_15.png

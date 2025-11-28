@@ -138,7 +138,10 @@ const ProductCard = ({ product, addToCart }) => {
                     </h3>
                 </Link>
 
-                <p className="text-gray-500 text-sm mb-4 line-clamp-2 flex-1">
+                <p
+                    className="text-gray-500 text-sm mb-4 line-clamp-3 flex-1 min-h-[4.5rem]"
+                    title={product.description}
+                >
                     {product.description}
                 </p>
 
