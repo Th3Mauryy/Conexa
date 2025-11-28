@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'react-toastify';
 
 const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -24,6 +25,11 @@ const AdminDashboard = () => {
     const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
 
+    //
+    const [orders, setOrders] = useState([]);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showOrderModal, setShowOrderModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('products');
     // Category Management States
     const [showCategoryManagement, setShowCategoryManagement] = useState(false);
     const [categoryStats, setCategoryStats] = useState({});
@@ -249,6 +255,30 @@ const AdminDashboard = () => {
             }
         }
     };
+
+    const fetchOrders = async () => {
+        try {
+            const { data } = await api.get('/orders');
+            setOrders(data);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+        }
+    };
+
+    const updateOrderStatus = async (orderId, newStatus) => {
+        try {
+            await api.put(`/orders/${orderId}/status`, { status: newStatus });
+            toast.success(`Orden actualizada a: ${newStatus}`);
+            fetchOrders(); // Reload orders
+        } catch (error) {
+            console.error('Error updating order:', error);
+            toast.error('Error al actualizar orden');
+        }
+    };
+
+    useEffect(() => {
+        fetchOrders();
+    }, []);
 
     // Category Management Functions
     const fetchCategoryStats = async () => {
@@ -979,6 +1009,104 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
+
+
+
+            {/* Orders Management Section */}
+            <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">📦 Gestión de Órdenes</h2>
+
+                {/* Orders Table */}
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dirección</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método Pago</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {orders.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+                                        No hay órdenes registradas
+                                    </td>
+                                </tr>
+                            ) : (
+                                orders.map((order) => (
+                                    <tr key={order._id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <span className="text-sm font-mono">#{order._id.slice(-6).toUpperCase()}</span>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="text-sm">
+                                                <p className="font-medium text-gray-900">{order.user?.name || 'Sin nombre'}</p>
+                                                <p className="text-gray-500">{order.user?.email || 'Sin email'}</p>
+                                                <p className="text-gray-500">{order.user?.phone || 'Sin teléfono'}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="text-xs text-gray-600 max-w-xs">
+                                                <p>{order.shippingAddress.street} {order.shippingAddress.extNumber}</p>
+                                                <p>{order.shippingAddress.colony}, {order.shippingAddress.city}</p>
+                                                <p>{order.shippingAddress.state}, CP {order.shippingAddress.zipCode}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <span className="text-sm font-bold">${order.totalPrice.toFixed(2)}</span>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            {order.paymentMethod === 'PayPal' ? (
+                                                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">💳 PayPal</span>
+                                            ) : (
+                                                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">💵 Efectivo</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            {order.status === 'Pendiente' && (
+                                                <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">🟡 Pendiente</span>
+                                            )}
+                                            {order.status === 'Procesando' && (
+                                                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">🔵 Procesando</span>
+                                            )}
+                                            {order.status === 'En Reparto' && (
+                                                <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">🟣 En Reparto</span>
+                                            )}
+                                            {order.status === 'Entregado' && (
+                                                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">🟢 Entregado</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm">
+                                            {order.status === 'Pendiente' || order.status === 'Procesando' ? (
+                                                <button
+                                                    onClick={() => updateOrderStatus(order._id, 'En Reparto')}
+                                                    className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-xs"
+                                                >
+                                                    🚚 Iniciar Reparto
+                                                </button>
+                                            ) : order.status === 'En Reparto' ? (
+                                                <button
+                                                    onClick={() => updateOrderStatus(order._id, 'Entregado')}
+                                                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs"
+                                                >
+                                                    ✅ Marcar Entregado
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-400 text-xs">Completado</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
 
 
