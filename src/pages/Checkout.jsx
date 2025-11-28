@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 import api from '../api';
+import PayPalButton from '../components/PayPalButton';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -38,7 +40,8 @@ const Checkout = () => {
         }
     }, [user]);
 
-    const [paymentMethod, setPaymentMethod] = useState('Transferencia bancaria');
+    const [paymentMethod, setPaymentMethod] = useState('Efectivo');
+    const [processingPayPal, setProcessingPayPal] = useState(false);
 
     // Calculate prices
     const itemsPrice = cart.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -50,9 +53,9 @@ const Checkout = () => {
         setStep(2);
     };
 
-    const placeOrder = async () => {
+    const placeOrder = async (paypalData = null) => {
         if (!user) {
-            alert('Debes iniciar sesión para realizar una compra');
+            toast.error('Debes iniciar sesión para realizar una compra');
             navigate('/login');
             return;
         }
@@ -74,20 +77,43 @@ const Checkout = () => {
                 paymentMethod,
                 itemsPrice,
                 shippingPrice,
-                totalPrice
+                totalPrice: parseFloat(totalPrice.toFixed(2))
             };
+
+            // If PayPal payment, mark as paid
+            if (paypalData) {
+                orderData.isPaid = true;
+                orderData.paidAt = Date.now();
+                orderData.paymentResult = {
+                    id: paypalData.orderID,
+                    status: paypalData.status,
+                    email_address: paypalData.payerEmail
+                };
+            }
 
             const { data } = await api.post('/orders', orderData);
 
             clearCart();
-            alert('¡Orden creada exitosamente! ID: ' + data._id);
+            toast.success('¡Orden creada exitosamente!');
             navigate('/order-history');
         } catch (error) {
             console.error('Error creating order:', error);
-            alert(error.response?.data?.message || 'Error al crear la orden');
+            toast.error(error.response?.data?.message || 'Error al crear la orden');
         } finally {
             setLoading(false);
+            setProcessingPayPal(false);
         }
+    };
+
+    const handlePayPalSuccess = async (paypalData) => {
+        setProcessingPayPal(true);
+        await placeOrder(paypalData);
+    };
+
+    const handlePayPalError = (error) => {
+        console.error('PayPal error:', error);
+        setProcessingPayPal(false);
+        toast.error('Error con PayPal. Intenta de nuevo.');
     };
 
     if (!cart || !cart.items || cart.items.length === 0) {
@@ -247,52 +273,85 @@ const Checkout = () => {
                             {step === 2 && (
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Método de Pago</h2>
-                                    <div className="space-y-4">
-                                        <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
+                                    <div className="space-y-4 mb-6">
+                                        <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-blue-500 transition-colors ${paymentMethod === 'Efectivo' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                                             <input
                                                 type="radio"
                                                 name="payment"
-                                                value="Transferencia bancaria"
-                                                checked={paymentMethod === 'Transferencia bancaria'}
+                                                value="Efectivo"
+                                                checked={paymentMethod === 'Efectivo'}
                                                 onChange={(e) => setPaymentMethod(e.target.value)}
-                                                className="w-5 h-5"
+                                                className="w-5 h-5 text-blue-600"
                                             />
-                                            <div className="ml-4">
-                                                <p className="font-medium text-gray-800">Transferencia Bancaria</p>
-                                                <p className="text-sm text-gray-600">Recibirás los datos bancarios después de confirmar</p>
+                                            <div className="ml-4 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl">💵</span>
+                                                    <p className="font-semibold text-gray-800">Pago en Efectivo</p>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mt-1">Paga al recibir tu pedido en tu domicilio</p>
                                             </div>
                                         </label>
 
-                                        <label className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
+                                        <label className={`flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-blue-500 transition-colors ${paymentMethod === 'PayPal' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                                             <input
                                                 type="radio"
                                                 name="payment"
-                                                value="Pago en efectivo"
-                                                checked={paymentMethod === 'Pago en efectivo'}
+                                                value="PayPal"
+                                                checked={paymentMethod === 'PayPal'}
                                                 onChange={(e) => setPaymentMethod(e.target.value)}
-                                                className="w-5 h-5"
+                                                className="w-5 h-5 text-blue-600"
                                             />
-                                            <div className="ml-4">
-                                                <p className="font-medium text-gray-800">Pago en Efectivo</p>
-                                                <p className="text-sm text-gray-600">Paga al recibir tu pedido</p>
+                                            <div className="ml-4 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl">💳</span>
+                                                    <p className="font-semibold text-gray-800">PayPal</p>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mt-1">Pago seguro con tarjeta o cuenta PayPal</p>
                                             </div>
                                         </label>
                                     </div>
 
-                                    <div className="flex gap-4 mt-6">
+                                    {/* PayPal Button */}
+                                    {paymentMethod === 'PayPal' ? (
+                                        <div className="bg-gray-50 p-6 rounded-lg border-2 border-blue-200 mb-6">
+                                            <p className="text-sm text-gray-600 mb-4 text-center">
+                                                Haz clic en el botón de PayPal para completar tu pago
+                                            </p>
+                                            <PayPalButton
+                                                amount={totalPrice.toFixed(2)}
+                                                currency="MXN"
+                                                onSuccess={handlePayPalSuccess}
+                                                onError={handlePayPalError}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-4 mt-6">
+                                            <button
+                                                onClick={() => setStep(1)}
+                                                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-medium"
+                                                disabled={processingPayPal}
+                                            >
+                                                Volver
+                                            </button>
+                                            <button
+                                                onClick={() => setStep(3)}
+                                                className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium"
+                                                disabled={processingPayPal}
+                                            >
+                                                Revisar Orden
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {paymentMethod === 'PayPal' && (
                                         <button
                                             onClick={() => setStep(1)}
-                                            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-medium"
+                                            className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 font-medium mt-4"
+                                            disabled={processingPayPal}
                                         >
-                                            Regresar
+                                            ← Volver a Dirección
                                         </button>
-                                        <button
-                                            onClick={() => setStep(3)}
-                                            className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium"
-                                        >
-                                            Revisar Orden
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
