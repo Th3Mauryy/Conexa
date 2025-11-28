@@ -651,7 +651,113 @@ const AdminDashboard = () => {
                 margin: { top: 10 }
             });
 
-            // Footer on last page
+            // === SECCIÓN 6: ESTADÍSTICAS DE VENTAS (NUEVO) ===
+            doc.addPage();
+            yPosition = 20;
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('📊 Reporte de Ventas', 14, yPosition);
+            yPosition += 10;
+
+            // Calculate Sales Stats
+            const salesMap = {};
+            let totalUnitsSold = 0;
+
+            // Filter valid orders (Paid or Delivered, exclude Cancelled)
+            const validOrders = orders.filter(o => o.isPaid || o.status === 'Entregado' || o.status === 'En Reparto');
+
+            validOrders.forEach(order => {
+                order.orderItems.forEach(item => {
+                    // Use product ID as key, handle if product is populated or just ID
+                    const productId = typeof item.product === 'object' ? item.product._id : item.product;
+                    salesMap[productId] = (salesMap[productId] || 0) + item.qty;
+                    totalUnitsSold += item.qty;
+                });
+            });
+
+            if (totalUnitsSold === 0) {
+                // CASE: NO SALES
+                doc.setFontSize(11);
+                doc.setTextColor(100, 100, 100);
+                doc.text('ℹ️ No hay datos de ventas registrados para generar estadísticas.', 14, yPosition);
+                doc.setFontSize(9);
+                doc.text('Este reporte se generará automáticamente cuando se completen las primeras órdenes.', 14, yPosition + 6);
+            } else {
+                // CASE: WITH SALES
+
+                // Prepare Sales Data
+                const productSales = products.map(p => ({
+                    ...p,
+                    sold: salesMap[p._id] || 0
+                }));
+
+                // Top 5 Best Sellers
+                const topSellers = [...productSales]
+                    .sort((a, b) => b.sold - a.sold)
+                    .slice(0, 5)
+                    .filter(p => p.sold > 0);
+
+                // Least Sold (Bottom 5, including 0 sales)
+                const leastSellers = [...productSales]
+                    .sort((a, b) => a.sold - b.sold)
+                    .slice(0, 5);
+
+                // --- Render Top Sellers ---
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text('🏆 Productos Más Vendidos', 14, yPosition);
+                yPosition += 5;
+
+                const topSellersData = topSellers.map(p => [
+                    p.name,
+                    p.category,
+                    p.sold + ' unidades',
+                    '$' + (p.price * p.sold).toLocaleString('es-MX')
+                ]);
+
+                if (topSellers.length > 0) {
+                    autoTable(doc, {
+                        head: [['Producto', 'Categoría', 'Vendidos', 'Ingresos Generados']],
+                        body: topSellersData,
+                        startY: yPosition,
+                        theme: 'striped',
+                        headStyles: { fillColor: [255, 215, 0], textColor: 0 }, // Gold color
+                        styles: { fontSize: 9 },
+                        columnStyles: { 0: { cellWidth: 80 } }
+                    });
+                    yPosition = doc.lastAutoTable.finalY + 15;
+                } else {
+                    doc.setFontSize(10);
+                    doc.text('No hay productos vendidos aún.', 14, yPosition + 5);
+                    yPosition += 15;
+                }
+
+                // --- Render Least Sellers ---
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text('📉 Productos Menos Vendidos (Oportunidad de Oferta)', 14, yPosition);
+                yPosition += 5;
+
+                const leastSellersData = leastSellers.map(p => [
+                    p.name,
+                    p.category,
+                    p.sold + ' unidades',
+                    p.countInStock + ' en stock'
+                ]);
+
+                autoTable(doc, {
+                    head: [['Producto', 'Categoría', 'Vendidos', 'Stock Actual']],
+                    body: leastSellersData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: { fillColor: [100, 116, 139], textColor: 255 }, // Slate color
+                    styles: { fontSize: 9 },
+                    columnStyles: { 0: { cellWidth: 90 } }
+                });
+            }
+
+            // Footer on last page (re-run to cover new pages)
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
@@ -665,8 +771,8 @@ const AdminDashboard = () => {
                 );
             }
 
-            doc.save(`Reporte_Inventario_Conexa_${new Date().toISOString().split('T')[0]}.pdf`);
-            alert('✅ PDF generado correctamente con estadísticas completas');
+            doc.save(`Reporte_Inventario_Ventas_${new Date().toISOString().split('T')[0]}.pdf`);
+            alert('✅ PDF generado correctamente con estadísticas de inventario y ventas');
         } catch (error) {
             console.error('Error generando PDF:', error);
             alert('❌ Error al generar el PDF: ' + error.message);
