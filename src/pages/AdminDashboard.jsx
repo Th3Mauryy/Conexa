@@ -388,28 +388,189 @@ const AdminDashboard = () => {
     const generatePDF = async () => {
         try {
             const doc = new jsPDF();
+            let yPosition = 20;
 
-            doc.setFontSize(18);
-            doc.text('Reporte de Inventario - Conexa', 14, 22);
-            doc.setFontSize(11);
-            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 30);
+            // Title
+            doc.setFontSize(20);
+            doc.setTextColor(30, 64, 175); // Blue color
+            doc.text('📊 Reporte de Inventario - Conexa', 14, yPosition);
 
-            // Helper function to convert image to base64
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            yPosition += 8;
+            doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, yPosition);
+
+            // Line separator
+            yPosition += 5;
+            doc.setDrawColor(200, 200, 200);
+            doc.line(14, yPosition, 196, yPosition);
+            yPosition += 10;
+
+            // === SECCIÓN 1: RESUMEN EJECUTIVO ===
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('📈 Resumen Ejecutivo', 14, yPosition);
+            yPosition += 8;
+
+            // Calculate statistics
+            const totalProducts = products.length;
+            const totalStock = products.reduce((sum, p) => sum + p.countInStock, 0);
+            const totalValue = products.reduce((sum, p) => sum + (p.price * p.countInStock), 0);
+            const avgPrice = totalProducts > 0 ? products.reduce((sum, p) => sum + p.price, 0) / totalProducts : 0;
+            const lowStockProducts = products.filter(p => p.countInStock < 5).length;
+            const outOfStock = products.filter(p => p.countInStock === 0).length;
+
+            // Stats boxes
+            doc.setFontSize(10);
+            const statsData = [
+                ['Total Productos:', totalProducts],
+                ['Stock Total:', totalStock + ' unidades'],
+                ['Valor Inventario:', '$' + totalValue.toLocaleString('es-MX')],
+                ['Precio Promedio:', '$' + avgPrice.toLocaleString('es-MX')],
+                ['Stock Bajo (<5):', lowStockProducts],
+                ['Sin Stock:', outOfStock]
+            ];
+
+            doc.autoTable({
+                body: statsData,
+                startY: yPosition,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2 },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 50 },
+                    1: { textColor: [30, 64, 175] }
+                }
+            });
+
+            yPosition = doc.lastAutoTable.finalY + 10;
+
+            // === SECCIÓN 2: TOP 7 PRODUCTOS CON MÁS STOCK ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('📦 Top 7 - Mayor Stock', 14, yPosition);
+            yPosition += 5;
+
+            const topStock = [...products]
+                .sort((a, b) => b.countInStock - a.countInStock)
+                .slice(0, 7);
+
+            const topStockData = topStock.map(p => [
+                p.name.length > 30 ? p.name.substring(0, 27) + '...' : p.name,
+                p.countInStock + ' unidades',
+                '$' + (p.price * p.countInStock).toLocaleString('es-MX')
+            ]);
+
+            doc.autoTable({
+                head: [['Producto', 'Stock', 'Valor']],
+                body: topStockData,
+                startY: yPosition,
+                theme: 'striped',
+                headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+                styles: { fontSize: 9 }
+            });
+
+            yPosition = doc.lastAutoTable.finalY + 10;
+
+            // === SECCIÓN 3: PRODUCTOS CON STOCK BAJO (Necesitan Reabastecimiento) ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.text('⚠️  Stock Bajo - Requiere Reabastecimiento', 14, yPosition);
+            yPosition += 5;
+
+            const lowStock = products
+                .filter(p => p.countInStock > 0 && p.countInStock < 5)
+                .sort((a, b) => a.countInStock - b.countInStock);
+
+            if (lowStock.length > 0) {
+                const lowStockData = lowStock.map(p => [
+                    p.name.length > 30 ? p.name.substring(0, 27) + '...' : p.name,
+                    p.countInStock + ' unidades',
+                    p.category,
+                    '$' + p.price.toLocaleString('es-MX')
+                ]);
+
+                doc.autoTable({
+                    head: [['Producto', 'Stock', 'Categoría', 'Precio']],
+                    body: lowStockData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: { fillColor: [234, 179, 8], textColor: 0 },
+                    styles: { fontSize: 9 }
+                });
+
+                yPosition = doc.lastAutoTable.finalY + 10;
+            } else {
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text('✅ No hay productos con stock bajo', 14, yPosition + 5);
+                yPosition += 15;
+            }
+
+            // === SECCIÓN 4: SIN STOCK ===
+            if (yPosition > 240) {
+                doc.addPage();
+                yPosition = 20;
+            }
+
+            const noStock = products.filter(p => p.countInStock === 0);
+
+            if (noStock.length > 0) {
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.text('🔴 Productos Sin Stock', 14, yPosition);
+                yPosition += 5;
+
+                const noStockData = noStock.map(p => [
+                    p.name.length > 35 ? p.name.substring(0, 32) + '...' : p.name,
+                    p.category,
+                    '$' + p.price.toLocaleString('es-MX')
+                ]);
+
+                doc.autoTable({
+                    head: [['Producto', 'Categoría', 'Precio']],
+                    body: noStockData,
+                    startY: yPosition,
+                    theme: 'striped',
+                    headStyles: { fillColor: [220, 38, 38], textColor: 255 },
+                    styles: { fontSize: 9 }
+                });
+
+                yPosition = doc.lastAutoTable.finalY + 10;
+            }
+
+            // === SECCIÓN 5: INVENTARIO COMPLETO ===
+            doc.addPage();
+            yPosition = 20;
+
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('📋 Inventario Completo', 14, yPosition);
+            yPosition += 5;
+
+            // Load images
             const getBase64Image = (url) => {
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     const img = new Image();
                     img.crossOrigin = 'Anonymous';
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
+                        canvas.width = 40; // Smaller size
+                        canvas.height = 40;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
+                        ctx.drawImage(img, 0, 0, 40, 40);
                         try {
-                            const dataURL = canvas.toDataURL('image/jpeg');
-                            resolve(dataURL);
+                            resolve(canvas.toDataURL('image/jpeg', 0.6));
                         } catch (e) {
-                            resolve(null); // If conversion fails, return null
+                            resolve(null);
                         }
                     };
                     img.onerror = () => resolve(null);
@@ -417,7 +578,6 @@ const AdminDashboard = () => {
                 });
             };
 
-            // Load all images first
             const productsWithImages = await Promise.all(
                 products.map(async (product) => {
                     const base64Image = await getBase64Image(product.image);
@@ -425,27 +585,29 @@ const AdminDashboard = () => {
                 })
             );
 
-            const tableColumn = ["Imagen", "Nombre", "Categoría", "Precio", "Stock", "Marca"];
-            const tableRows = [];
+            const tableRows = productsWithImages.map(p => [
+                '', // Image placeholder
+                p.name.length > 25 ? p.name.substring(0, 22) + '...' : p.name,
+                p.category,
+                '$' + p.price.toLocaleString('es-MX'),
+                p.countInStock,
+                p.brand || '-'
+            ]);
 
-            productsWithImages.forEach(product => {
-                const productData = [
-                    '', // Placeholder for image
-                    product.name,
-                    product.category,
-                    `$${product.price}`,
-                    product.countInStock,
-                    product.brand
-                ];
-                tableRows.push(productData);
-            });
-
-            autoTable(doc, {
-                head: [tableColumn],
+            doc.autoTable({
+                head: [['Img', 'Producto', 'Categoría', 'Precio', 'Stock', 'Marca']],
                 body: tableRows,
-                startY: 40,
+                startY: yPosition,
+                theme: 'grid',
+                headStyles: { fillColor: [30, 64, 175], textColor: 255 },
+                styles: { fontSize: 8, cellPadding: 2 },
                 columnStyles: {
-                    0: { cellWidth: 20 } // Image column width
+                    0: { cellWidth: 15 },
+                    1: { cellWidth: 55 },
+                    2: { cellWidth: 35 },
+                    3: { cellWidth: 25 },
+                    4: { cellWidth: 20 },
+                    5: { cellWidth: 30 }
                 },
                 didDrawCell: (data) => {
                     if (data.section === 'body' && data.column.index === 0) {
@@ -455,24 +617,39 @@ const AdminDashboard = () => {
                                 doc.addImage(
                                     product.base64Image,
                                     'JPEG',
-                                    data.cell.x + 2,
-                                    data.cell.y + 2,
-                                    16,
-                                    16
+                                    data.cell.x + 1,
+                                    data.cell.y + 1,
+                                    13,
+                                    13
                                 );
                             } catch (e) {
                                 console.error('Error adding image:', e);
                             }
                         }
                     }
-                }
+                },
+                margin: { top: 10 }
             });
 
-            doc.save('reporte_inventario_conexa.pdf');
-            alert('PDF generado correctamente');
+            // Footer on last page
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text(
+                    `Conexa Store - Página ${i} de ${pageCount}`,
+                    doc.internal.pageSize.width / 2,
+                    doc.internal.pageSize.height - 10,
+                    { align: 'center' }
+                );
+            }
+
+            doc.save(`Reporte_Inventario_Conexa_${new Date().toISOString().split('T')[0]}.pdf`);
+            alert('✅ PDF generado correctamente con estadísticas completas');
         } catch (error) {
             console.error('Error generando PDF:', error);
-            alert('Error al generar el PDF: ' + error.message);
+            alert('❌ Error al generar el PDF: ' + error.message);
         }
     };
 
