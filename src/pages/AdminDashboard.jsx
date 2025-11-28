@@ -657,7 +657,7 @@ const AdminDashboard = () => {
 
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0);
-            doc.text('📊 Reporte de Ventas', 14, yPosition);
+            doc.text('Reporte de Ventas', 14, yPosition);
             yPosition += 10;
 
             // Calculate Sales Stats
@@ -680,9 +680,9 @@ const AdminDashboard = () => {
                 // CASE: NO SALES
                 doc.setFontSize(11);
                 doc.setTextColor(100, 100, 100);
-                doc.text('ℹ️ No hay datos de ventas registrados para generar estadísticas.', 14, yPosition);
+                doc.text('No hay datos de ventas registrados para generar estadisticas.', 14, yPosition);
                 doc.setFontSize(9);
-                doc.text('Este reporte se generará automáticamente cuando se completen las primeras órdenes.', 14, yPosition + 6);
+                doc.text('Este reporte se generara automaticamente cuando se completen las primeras ordenes.', 14, yPosition + 6);
             } else {
                 // CASE: WITH SALES
 
@@ -706,7 +706,7 @@ const AdminDashboard = () => {
                 // --- Render Top Sellers ---
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
-                doc.text('🏆 Productos Más Vendidos', 14, yPosition);
+                doc.text('Productos Mas Vendidos', 14, yPosition);
                 yPosition += 5;
 
                 const topSellersData = topSellers.map(p => [
@@ -718,7 +718,7 @@ const AdminDashboard = () => {
 
                 if (topSellers.length > 0) {
                     autoTable(doc, {
-                        head: [['Producto', 'Categoría', 'Vendidos', 'Ingresos Generados']],
+                        head: [['Producto', 'Categoria', 'Vendidos', 'Ingresos Generados']],
                         body: topSellersData,
                         startY: yPosition,
                         theme: 'striped',
@@ -729,14 +729,14 @@ const AdminDashboard = () => {
                     yPosition = doc.lastAutoTable.finalY + 15;
                 } else {
                     doc.setFontSize(10);
-                    doc.text('No hay productos vendidos aún.', 14, yPosition + 5);
+                    doc.text('No hay productos vendidos aun.', 14, yPosition + 5);
                     yPosition += 15;
                 }
 
                 // --- Render Least Sellers ---
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
-                doc.text('📉 Productos Menos Vendidos (Oportunidad de Oferta)', 14, yPosition);
+                doc.text('Productos Menos Vendidos (Oportunidad de Oferta)', 14, yPosition);
                 yPosition += 5;
 
                 const leastSellersData = leastSellers.map(p => [
@@ -747,7 +747,7 @@ const AdminDashboard = () => {
                 ]);
 
                 autoTable(doc, {
-                    head: [['Producto', 'Categoría', 'Vendidos', 'Stock Actual']],
+                    head: [['Producto', 'Categoria', 'Vendidos', 'Stock Actual']],
                     body: leastSellersData,
                     startY: yPosition,
                     theme: 'striped',
