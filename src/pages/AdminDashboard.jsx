@@ -388,6 +388,50 @@ const AdminDashboard = () => {
     const generatePDF = async () => {
         try {
             const doc = new jsPDF();
+            // Load images
+            const getBase64Image = (url) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        // Increased resolution for better quality
+                        canvas.width = 150;
+                        canvas.height = 150;
+                        const ctx = canvas.getContext('2d');
+                        // Draw image maintaining aspect ratio (cover)
+                        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+                        const x = (canvas.width / 2) - (img.width / 2) * scale;
+                        const y = (canvas.height / 2) - (img.height / 2) * scale;
+                        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+                        try {
+                            resolve(canvas.toDataURL('image/jpeg', 0.8)); // Higher quality
+                        } catch (e) {
+                            resolve(null);
+                        }
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = url;
+                });
+            };
+
+            const productsWithImages = await Promise.all(
+                products.map(async (product) => {
+                    const base64Image = await getBase64Image(product.image);
+                    return { ...product, base64Image };
+                })
+            );
+
+            const tableRows = productsWithImages.map(p => [
+                '', // Image placeholder
+                p.name, // Full name, no truncation
+                p.category,
+                '$' + p.price.toLocaleString('es-MX'),
+                p.countInStock,
+                p.brand || '-'
+            ]);
+
             autoTable(doc, {
                 head: [['Img', 'Producto', 'Categoría', 'Precio', 'Stock', 'Marca']],
                 body: tableRows,
