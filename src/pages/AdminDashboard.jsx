@@ -1366,7 +1366,7 @@ const AdminDashboard = () => {
                                             <div className="text-sm">
                                                 <p className="font-medium text-gray-900">{order.user?.name || 'Sin nombre'}</p>
                                                 <p className="text-gray-500">{order.user?.email || 'Sin email'}</p>
-                                                <p className="text-gray-500">{order.user?.phone || 'Sin teléfono'}</p>
+                                                <p className="text-gray-500">{order.shippingAddress?.phone || order.user?.phone || 'Sin teléfono'}</p>
                                             </div>
                                         </td>
                                         <td className="px-4 py-4">

@@ -22,7 +22,8 @@ const Checkout = () => {
         city: user?.address?.city || '',
         state: user?.address?.state || '',
         zipCode: user?.address?.zipCode || '',
-        country: 'México'
+        country: 'México',
+        phone: user?.phone || ''
     });
 
     useEffect(() => {
@@ -35,7 +36,8 @@ const Checkout = () => {
                 city: user.address.city || '',
                 state: user.address.state || '',
                 zipCode: user.address.zipCode || '',
-                country: 'México'
+                country: 'México',
+                phone: user.phone || ''
             });
         }
     }, [user]);
@@ -257,6 +259,17 @@ const Checkout = () => {
                                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100"
                                                 />
                                             </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono *</label>
+                                                <input
+                                                    type="tel"
+                                                    required
+                                                    value={shippingAddress.phone}
+                                                    onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="10 dígitos"
+                                                />
+                                            </div>
                                         </div>
 
                                         <button
@@ -369,7 +382,8 @@ const Checkout = () => {
                                                 {shippingAddress.intNumber && ` Int. ${shippingAddress.intNumber}`}<br />
                                                 {shippingAddress.colony}, {shippingAddress.city}<br />
                                                 {shippingAddress.state}, CP {shippingAddress.zipCode}<br />
-                                                {shippingAddress.country}
+                                                {shippingAddress.country}<br />
+                                                Tel: {shippingAddress.phone}
                                             </p>
                                         </div>
 
