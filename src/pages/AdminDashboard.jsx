@@ -280,7 +280,7 @@ const AdminDashboard = () => {
 
     const openStatusModal = (order) => {
         setOrderToUpdate(order);
-        setSelectedStatus(order.status);
+        setSelectedStatus(order.status || 'Pendiente');
         setShowStatusModal(true);
     };
 
