@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import ReviewModal from './ReviewModal';
 
 const UserNotificationBell = () => {
@@ -64,21 +65,47 @@ const UserNotificationBell = () => {
         }
     };
 
-    const handleNotificationClick = (notification) => {
+    const handleNotificationClick = async (notification) => {
         if (!notification.read) {
             markAsRead(notification._id);
         }
 
         if (notification.type === 'rate_product') {
-            setSelectedProductForReview({
-                productId: notification.data.productId,
-                name: notification.data.productName,
-                image: notification.data.image,
-                userId: user._id
-            });
-            setSelectedOrderId(notification.data.orderId);
-            setIsReviewModalOpen(true);
-            setIsOpen(false); // Close dropdown
+            try {
+                // Check if already reviewed
+                const { data: reviews } = await api.get(`/reviews/${notification.data.productId}`);
+                const hasReviewed = reviews.some(review => review.user._id === user._id || review.user === user._id);
+
+                if (hasReviewed) {
+                    toast.info('¡Ya has calificado este producto! Gracias por tu opinión.');
+                    setIsOpen(false);
+                    return;
+                }
+
+                setSelectedProductForReview({
+                    productId: notification.data.productId,
+                    name: notification.data.productName,
+                    image: notification.data.image,
+                    userId: user._id
+                });
+                setSelectedOrderId(notification.data.orderId);
+                setIsReviewModalOpen(true);
+                setIsOpen(false); // Close dropdown
+            } catch (error) {
+                console.error('Error checking reviews:', error);
+                // If error checking, still allow opening modal or show error?
+                // Better to fail safe and let them try, or show error.
+                // Let's let them try, the backend will block it anyway if duplicate (though backend returns 400)
+                setSelectedProductForReview({
+                    productId: notification.data.productId,
+                    name: notification.data.productName,
+                    image: notification.data.image,
+                    userId: user._id
+                });
+                setSelectedOrderId(notification.data.orderId);
+                setIsReviewModalOpen(true);
+                setIsOpen(false);
+            }
         }
     };
 

@@ -30,7 +30,7 @@ const ReviewModal = ({ isOpen, onClose, product, orderId, onReviewSubmitted }) =
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 max-h-[90vh] overflow-y-auto m-4">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 className="text-lg font-bold text-gray-900">Calificar Producto</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
