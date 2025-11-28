@@ -133,8 +133,13 @@ router.delete('/:name', async (req, res) => {
         // Find all products in this category
         const products = await Product.find({ category: categoryName });
 
+        // If no products, just return success (category is already "deleted")
         if (products.length === 0) {
-            return res.status(404).json({ message: 'Categoría no encontrada o vacía' });
+            return res.json({
+                message: 'Categoría eliminada exitosamente (no tenía productos)',
+                deletedProducts: 0,
+                products: []
+            });
         }
 
         // Check if any product has stock

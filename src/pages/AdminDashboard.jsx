@@ -309,8 +309,10 @@ const AdminDashboard = () => {
     const handleDeleteCategory = (categoryName) => {
         const stats = categoryStats[categoryName];
 
+        // If category has no stats, it means there are no products - allow deletion
         if (!stats) {
-            alert('Categoría no encontrada');
+            setDeletingCategory(categoryName);
+            setShowDeleteModal(true);
             return;
         }
 
