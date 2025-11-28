@@ -34,7 +34,7 @@ import ResetPassword from './pages/ResetPassword';
 function App() {
   return (
     <AuthProvider>
-      <PayPalScriptProvider options={{ 'client-id': import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test', currency: 'MXN' }}>
+      <PayPalScriptProvider options={{ 'client-id': import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test', currency: 'MXN', locale: 'es_MX' }}>
         <CartProvider>
           <WishlistProvider>
             <div className="min-h-screen bg-hueso-50">
