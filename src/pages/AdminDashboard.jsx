@@ -1404,12 +1404,18 @@ const AdminDashboard = () => {
                                             )}
                                         </td>
                                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                                            <button
-                                                onClick={() => openStatusModal(order)}
-                                                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs flex items-center gap-1"
-                                            >
-                                                <span>⚙️</span> Gestionar
-                                            </button>
+                                            {order.status !== 'Cancelada' ? (
+                                                <button
+                                                    onClick={() => openStatusModal(order)}
+                                                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs flex items-center gap-1"
+                                                >
+                                                    <span>⚙️</span> Gestionar
+                                                </button>
+                                            ) : (
+                                                <span className="text-red-500 text-xs font-medium flex items-center gap-1">
+                                                    <span>❌</span> Cancelada
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -1540,7 +1546,6 @@ const AdminDashboard = () => {
                                 <option value="Procesando">🔵 Procesando</option>
                                 <option value="En Reparto">🟣 En Reparto</option>
                                 <option value="Entregado">🟢 Entregado</option>
-                                <option value="Cancelada">🔴 Cancelada</option>
                             </select>
                         </div>
 
