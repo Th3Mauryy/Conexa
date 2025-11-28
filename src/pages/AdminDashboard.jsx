@@ -1404,17 +1404,21 @@ const AdminDashboard = () => {
                                             )}
                                         </td>
                                         <td className="px-4 py-4 whitespace-nowrap text-sm">
-                                            {order.status !== 'Cancelada' ? (
+                                            {order.status === 'Cancelada' ? (
+                                                <span className="text-red-500 text-xs font-medium flex items-center gap-1">
+                                                    <span>❌</span> Cancelada
+                                                </span>
+                                            ) : order.status === 'Entregado' ? (
+                                                <span className="text-green-600 text-xs font-medium flex items-center gap-1">
+                                                    <span>✅</span> Completada
+                                                </span>
+                                            ) : (
                                                 <button
                                                     onClick={() => openStatusModal(order)}
                                                     className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-xs flex items-center gap-1"
                                                 >
                                                     <span>⚙️</span> Gestionar
                                                 </button>
-                                            ) : (
-                                                <span className="text-red-500 text-xs font-medium flex items-center gap-1">
-                                                    <span>❌</span> Cancelada
-                                                </span>
                                             )}
                                         </td>
                                     </tr>
