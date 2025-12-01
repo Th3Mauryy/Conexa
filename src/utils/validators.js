@@ -25,12 +25,11 @@ export const validateEmail = (email) => {
         return { isValid: false, error: 'Dominio de correo incompleto (ej: .com, .mx)' };
     }
 
-    // Validar dominios comunes mal escritos
-    const commonDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com'];
+    // Validar dominios comunes mal escritos (solo si coinciden EXACTAMENTE)
     const domain = email.split('@')[1];
-    const partialDomains = ['gmail.c', 'outlook.c', 'hotmail.c', 'yahoo.c'];
+    const incompleteDomains = ['gmail.c', 'gmail.co', 'outlook.c', 'outlook.co', 'hotmail.c', 'hotmail.co', 'yahoo.c', 'yahoo.co'];
 
-    if (partialDomains.some(partial => domain?.startsWith(partial))) {
+    if (incompleteDomains.includes(domain)) {
         return { isValid: false, error: 'Dominio de correo incompleto' };
     }
 
