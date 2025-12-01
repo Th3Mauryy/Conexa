@@ -1,17 +1,61 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { validateEmail } from '../utils/validators';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [touched, setTouched] = useState({ email: false, password: false });
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setEmail(value);
+        if (touched.email) {
+            const validation = validateEmail(value);
+            setEmailError(validation.error);
+        }
+    };
+
+    const handleEmailBlur = () => {
+        setTouched(prev => ({ ...prev, email: true }));
+        const validation = validateEmail(email);
+        setEmailError(validation.error);
+    };
+
+    const handlePasswordChange = (e) => {
+        setPassword(e.target.value);
+    };
+
+    const handlePasswordBlur = () => {
+        setTouched(prev => ({ ...prev, password: true }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        // Marcar campos como tocados
+        setTouched({ email: true, password: true });
+
+        // Validar email
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.isValid) {
+            setEmailError(emailValidation.error);
+            setError('Por favor ingresa un correo electrónico válido');
+            return;
+        }
+
+        // Validar password no vacío
+        if (!password) {
+            setError('Por favor ingresa tu contraseña');
+            return;
+        }
+
         const result = await login(email, password);
         if (result.success) {
             if (result.user && result.user.isAdmin) {
@@ -22,6 +66,17 @@ const Login = () => {
         } else {
             setError(result.message);
         }
+    };
+
+    const getInputBorderClass = (field, value, hasError) => {
+        if (!touched[field]) return 'border-gray-300';
+        if (hasError) return 'border-red-500';
+        if (value) return 'border-green-500';
+        return 'border-gray-300';
+    };
+
+    const isFormInvalid = () => {
+        return !email || !password || emailError !== '';
     };
 
     return (
@@ -44,36 +99,48 @@ const Login = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
-                            Correo Electrónico
+                            Correo Electrónico *
                         </label>
                         <input
                             type="email"
                             id="email"
-                            className="block w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base"
+                            className={`block w-full px-4 py-3 rounded-lg border-2 ${getInputBorderClass('email', email, emailError)} focus:ring-2 focus:ring-blue-500 transition-colors text-base`}
                             placeholder="ejemplo@correo.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
+                            onChange={handleEmailChange}
+                            onBlur={handleEmailBlur}
                         />
+                        {touched.email && emailError && (
+                            <p className="text-red-500 text-xs mt-1 flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                {emailError}
+                            </p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
-                            Contraseña
+                            Contraseña *
                         </label>
                         <input
                             type="password"
                             id="password"
-                            className="block w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base"
+                            className={`block w-full px-4 py-3 rounded-lg border-2 ${getInputBorderClass('password', password, false)} focus:ring-2 focus:ring-blue-500 transition-colors text-base`}
                             placeholder="••••••••"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
+                            onChange={handlePasswordChange}
+                            onBlur={handlePasswordBlur}
                         />
                     </div>
 
                     <button
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                        className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-bold text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] ${isFormInvalid()
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                            }`}
                         type="submit"
+                        disabled={isFormInvalid()}
                     >
                         Iniciar Sesión
                     </button>

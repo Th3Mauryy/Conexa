@@ -4,6 +4,7 @@ import api from '../api';
 import StoreNavbar from '../components/StoreNavbar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { validatePhone, validateZipCode, formatPhone, cleanPhone } from '../utils/validators';
 
 const UserProfile = () => {
     const { user, setUser, loading: authLoading } = useAuth();
@@ -14,6 +15,7 @@ const UserProfile = () => {
     const [lookingUpZip, setLookingUpZip] = useState(false);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [availableColonies, setAvailableColonies] = useState([]);
+    const [fieldErrors, setFieldErrors] = useState({ phone: '', zipCode: '' });
 
     const [formData, setFormData] = useState({
         name: user?.name || '',
@@ -155,18 +157,45 @@ const UserProfile = () => {
         if (name.startsWith('address.')) {
             const addressField = name.split('.')[1];
 
+            // Solo permitir números en código postal y limitar a 5 dígitos
+            if (addressField === 'zipCode') {
+                const numericValue = value.replace(/\D/g, '').slice(0, 5);
+                setFormData(prev => ({
+                    ...prev,
+                    address: {
+                        ...prev.address,
+                        [addressField]: numericValue
+                    }
+                }));
+
+                // Validar en tiempo real
+                const validation = validateZipCode(numericValue);
+                setFieldErrors(prev => ({ ...prev, zipCode: validation.error }));
+
+                // Auto-lookup when zip code is complete
+                if (numericValue.length === 5) {
+                    lookupZipCode(numericValue);
+                }
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    address: {
+                        ...prev.address,
+                        [addressField]: value
+                    }
+                }));
+            }
+        } else if (name === 'phone') {
+            // Formatear teléfono mientras se escribe
+            const formatted = formatPhone(value);
             setFormData(prev => ({
                 ...prev,
-                address: {
-                    ...prev.address,
-                    [addressField]: value
-                }
+                [name]: formatted
             }));
 
-            // Auto-lookup when zip code is complete
-            if (addressField === 'zipCode' && value.length === 5) {
-                lookupZipCode(value);
-            }
+            // Validar en tiempo real
+            const validation = validatePhone(formatted);
+            setFieldErrors(prev => ({ ...prev, phone: validation.error }));
         } else {
             setFormData(prev => ({
                 ...prev,
@@ -177,17 +206,37 @@ const UserProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validar campos antes de enviar
+        const phoneValidation = validatePhone(formData.phone);
+        const zipValidation = validateZipCode(formData.address.zipCode);
+
+        if (!phoneValidation.isValid || !zipValidation.isValid) {
+            toast.error('🔍 Por favor corrige los errores en el formulario');
+            setFieldErrors({
+                phone: phoneValidation.error,
+                zipCode: zipValidation.error
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const { data } = await api.put('/auth/profile', formData);
+            // Limpiar teléfono antes de enviar
+            const dataToSend = {
+                ...formData,
+                phone: cleanPhone(formData.phone)
+            };
+
+            const { data } = await api.put('/auth/profile', dataToSend);
             setUser(data);
             localStorage.setItem('userInfo', JSON.stringify(data));
-            alert('Perfil actualizado correctamente');
+            toast.success('✅ Perfil actualizado correctamente');
             setIsEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert('Error al actualizar el perfil: ' + (error.response?.data?.message || error.message));
+            toast.error('❌ Error al actualizar el perfil: ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
@@ -360,9 +409,18 @@ const UserProfile = () => {
                                     value={formData.phone}
                                     onChange={handleChange}
                                     disabled={!isEditing}
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
-                                    placeholder="(555) 123-4567"
+                                    className={`w-full px-4 py-3 border-2 ${fieldErrors.phone && isEditing ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all`}
+                                    placeholder="(312) 123-4567"
+                                    maxLength="14"
                                 />
+                                {fieldErrors.phone && isEditing && (
+                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {fieldErrors.phone}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -394,7 +452,7 @@ const UserProfile = () => {
                                         onChange={handleChange}
                                         disabled={!isEditing}
                                         maxLength="5"
-                                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                                        className={`w-full px-4 py-3 border-2 ${fieldErrors.zipCode && isEditing ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all`}
                                         placeholder="12345"
                                     />
                                     {lookingUpZip && (
@@ -406,6 +464,14 @@ const UserProfile = () => {
                                         </div>
                                     )}
                                 </div>
+                                {fieldErrors.zipCode && isEditing && (
+                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                        {fieldErrors.zipCode}
+                                    </p>
+                                )}
                                 <p className="text-xs text-blue-600 mt-1 ml-1">📍 Ingresa tu CP para auto-completar</p>
                             </div>
 
