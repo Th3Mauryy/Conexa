@@ -44,6 +44,10 @@ const AdminDashboard = () => {
     const [orderToUpdate, setOrderToUpdate] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState('');
 
+    // PDF Report Date Selection
+    const [reportMonth, setReportMonth] = useState('');
+    const [reportYear, setReportYear] = useState('');
+
     const openWhatsApp = (phone) => {
         if (!phone) return;
         const cleanPhone = phone.replace(/\D/g, '');
@@ -79,6 +83,7 @@ const AdminDashboard = () => {
         if (user && user.isAdmin) {
             fetchProducts();
             fetchNotifications();
+            fetchOrders();
         }
     }, [user]);
 
@@ -424,6 +429,41 @@ const AdminDashboard = () => {
 
     const generatePDF = async () => {
         try {
+            // Validar que haya productos
+            if (products.length === 0) {
+                alert('❌ No hay productos en el inventario para generar el reporte.');
+                return;
+            }
+
+            // Filtrar órdenes por mes y año si se especificaron
+            let filteredOrders = orders;
+            let periodText = 'Completo';
+
+            if (reportMonth && reportYear) {
+                const monthNum = parseInt(reportMonth);
+                const yearNum = parseInt(reportYear);
+
+                filteredOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate.getMonth() === monthNum && orderDate.getFullYear() === yearNum;
+                });
+
+                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                periodText = `${monthNames[monthNum]} ${yearNum}`;
+
+                if (filteredOrders.length === 0) {
+                    const confirmGenerate = window.confirm(
+                        `⚠️ No hay órdenes registradas para ${periodText}.\n\n` +
+                        `¿Deseas generar el reporte solo con el inventario actual?`
+                    );
+
+                    if (!confirmGenerate) {
+                        return;
+                    }
+                }
+            }
+
             const doc = new jsPDF();
             let yPosition = 20;
 
@@ -436,6 +476,8 @@ const AdminDashboard = () => {
             doc.setTextColor(100, 100, 100);
             yPosition += 8;
             doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, yPosition);
+            yPosition += 5;
+            doc.text(`Periodo: ${periodText}`, 14, yPosition);
 
             // Line separator
             yPosition += 5;
@@ -701,8 +743,8 @@ const AdminDashboard = () => {
             const salesMap = {};
             let totalUnitsSold = 0;
 
-            // Filter valid orders (Paid or Delivered, exclude Cancelled)
-            const validOrders = orders.filter(o => o.isPaid || o.status === 'Entregado' || o.status === 'En Reparto');
+            // Filter valid orders (Paid or Delivered, exclude Cancelled) - Use filtered orders
+            const validOrders = filteredOrders.filter(o => o.isPaid || o.status === 'Entregado' || o.status === 'En Reparto');
 
             validOrders.forEach(order => {
                 order.orderItems.forEach(item => {
@@ -808,7 +850,12 @@ const AdminDashboard = () => {
                 );
             }
 
-            doc.save(`Reporte_Inventario_Ventas_${new Date().toISOString().split('T')[0]}.pdf`);
+            // Generar nombre del archivo con periodo si aplica
+            const fileName = reportMonth && reportYear
+                ? `Reporte_${periodText.replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+                : `Reporte_Inventario_Ventas_${new Date().toISOString().split('T')[0]}.pdf`;
+
+            doc.save(fileName);
             alert('✅ PDF generado correctamente con estadísticas de inventario y ventas');
         } catch (error) {
             console.error('Error generando PDF:', error);
@@ -919,19 +966,106 @@ const AdminDashboard = () => {
 
             <div className="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
                 {/* Stats / Actions */}
-                <div className="mb-6 md:mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                    <div>
-                        <h2 className="text-base md:text-lg font-medium text-gray-900">Gestión de Productos</h2>
-                        <p className="text-xs md:text-sm text-gray-500">Añade, edita o elimina productos del catálogo.</p>
+                <div className="mb-6 md:mb-8">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                            <div>
+                                <h2 className="text-base md:text-lg font-medium text-gray-900">Gestión de Productos</h2>
+                                <p className="text-xs md:text-sm text-gray-500">Añade, edita o elimina productos del catálogo.</p>
+                            </div>
+                        </div>
+
+                        {/* PDF Report Section */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200 shadow-sm">
+                            <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+                                <div className="flex-1">
+                                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                                        <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Generar Reporte de Inventario y Ventas
+                                    </h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Mes (Opcional)
+                                            </label>
+                                            <select
+                                                value={reportMonth}
+                                                onChange={(e) => setReportMonth(e.target.value)}
+                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2 px-3 border bg-white"
+                                            >
+                                                <option value="">Todos los meses</option>
+                                                <option value="0">Enero</option>
+                                                <option value="1">Febrero</option>
+                                                <option value="2">Marzo</option>
+                                                <option value="3">Abril</option>
+                                                <option value="4">Mayo</option>
+                                                <option value="5">Junio</option>
+                                                <option value="6">Julio</option>
+                                                <option value="7">Agosto</option>
+                                                <option value="8">Septiembre</option>
+                                                <option value="9">Octubre</option>
+                                                <option value="10">Noviembre</option>
+                                                <option value="11">Diciembre</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Año (Opcional)
+                                            </label>
+                                            <select
+                                                value={reportYear}
+                                                onChange={(e) => setReportYear(e.target.value)}
+                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2 px-3 border bg-white"
+                                            >
+                                                <option value="">Todos los años</option>
+                                                <option value="2024">2024</option>
+                                                <option value="2025">2025</option>
+                                                <option value="2026">2026</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {(reportMonth || reportYear) && (
+                                        <p className="text-xs text-gray-600 mt-2 flex items-center">
+                                            <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {reportMonth && reportYear
+                                                ? 'El reporte incluirá solo datos del periodo seleccionado'
+                                                : 'Selecciona mes y año para filtrar el reporte'}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    {(reportMonth || reportYear) && (
+                                        <button
+                                            onClick={() => {
+                                                setReportMonth('');
+                                                setReportYear('');
+                                            }}
+                                            className="bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium flex items-center whitespace-nowrap"
+                                        >
+                                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Limpiar
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={generatePDF}
+                                        className="bg-green-600 text-white px-4 py-2.5 rounded-lg shadow-md hover:bg-green-700 hover:shadow-lg transition-all flex items-center justify-center text-sm font-medium whitespace-nowrap"
+                                    >
+                                        <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span className="hidden sm:inline">Descargar Reporte PDF</span>
+                                        <span className="sm:hidden">PDF</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button
-                        onClick={generatePDF}
-                        className="bg-green-600 text-white px-3 md:px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors flex items-center justify-center text-sm md:text-base"
-                    >
-                        <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        <span className="hidden sm:inline">Descargar Reporte PDF</span>
-                        <span className="sm:hidden">PDF</span>
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
