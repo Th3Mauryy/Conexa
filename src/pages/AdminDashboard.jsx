@@ -443,9 +443,14 @@ const AdminDashboard = () => {
                 const monthNum = parseInt(reportMonth);
                 const yearNum = parseInt(reportYear);
 
+                // Crear rango de fechas para el mes completo
+                // Desde el día 1 a las 00:00:00 hasta el último día a las 23:59:59
+                const startDate = new Date(yearNum, monthNum, 1, 0, 0, 0);
+                const endDate = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+
                 filteredOrders = orders.filter(order => {
                     const orderDate = new Date(order.createdAt);
-                    return orderDate.getMonth() === monthNum && orderDate.getFullYear() === yearNum;
+                    return orderDate >= startDate && orderDate <= endDate;
                 });
 
                 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -975,27 +980,46 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
-                        {/* PDF Report Section */}
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200 shadow-sm">
-                            <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-                                <div className="flex-1">
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
-                                        <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        Generar Reporte de Inventario y Ventas
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* PDF Report Section - Enhanced Design */}
+                        <div className="relative bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 p-6 rounded-2xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+                            {/* Decorative Elements */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-emerald-500/10 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-teal-400/10 to-green-500/10 rounded-full blur-2xl"></div>
+
+                            <div className="relative flex flex-col lg:flex-row lg:items-end gap-6">
+                                <div className="flex-1 space-y-4">
+                                    {/* Title with Icon */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-md">
+                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                Mes (Opcional)
+                                            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                                Generar Reporte PDF
+                                                <span className="text-xs font-normal text-gray-500 bg-white/70 px-2 py-0.5 rounded-full">Inventario y Ventas</span>
+                                            </h3>
+                                            <p className="text-xs text-gray-600 mt-0.5">Descarga reportes personalizados por periodo</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Selectors Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Month Selector */}
+                                        <div className="group">
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                Mes
                                             </label>
                                             <select
                                                 value={reportMonth}
                                                 onChange={(e) => setReportMonth(e.target.value)}
-                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2 px-3 border bg-white"
+                                                className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 text-sm py-3 px-4 bg-white hover:border-emerald-300 transition-all duration-200 cursor-pointer font-medium text-gray-700"
                                             >
-                                                <option value="">Todos los meses</option>
+                                                <option value="" className="text-gray-500">— Selecciona un mes —</option>
                                                 <option value="0">Enero</option>
                                                 <option value="1">Febrero</option>
                                                 <option value="2">Marzo</option>
@@ -1010,57 +1034,84 @@ const AdminDashboard = () => {
                                                 <option value="11">Diciembre</option>
                                             </select>
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                Año (Opcional)
+
+                                        {/* Year Selector - Dynamic */}
+                                        <div className="group">
+                                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                                                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Año
                                             </label>
                                             <select
                                                 value={reportYear}
                                                 onChange={(e) => setReportYear(e.target.value)}
-                                                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2 px-3 border bg-white"
+                                                className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 text-sm py-3 px-4 bg-white hover:border-emerald-300 transition-all duration-200 cursor-pointer font-medium text-gray-700"
                                             >
-                                                <option value="">Todos los años</option>
-                                                <option value="2024">2024</option>
-                                                <option value="2025">2025</option>
-                                                <option value="2026">2026</option>
+                                                <option value="" className="text-gray-500">— Selecciona un año —</option>
+                                                {(() => {
+                                                    const currentYear = new Date().getFullYear();
+                                                    const years = [];
+                                                    for (let i = 0; i <= 5; i++) {
+                                                        years.push(<option key={currentYear + i} value={currentYear + i}>{currentYear + i}</option>);
+                                                    }
+                                                    return years;
+                                                })()}
                                             </select>
                                         </div>
                                     </div>
+
+                                    {/* Info Message */}
                                     {(reportMonth || reportYear) && (
-                                        <p className="text-xs text-gray-600 mt-2 flex items-center">
-                                            <svg className="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {reportMonth && reportYear
-                                                ? 'El reporte incluirá solo datos del periodo seleccionado'
-                                                : 'Selecciona mes y año para filtrar el reporte'}
-                                        </p>
+                                        <div className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                                            <div className="p-1 bg-blue-100 rounded-lg mt-0.5">
+                                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-xs font-semibold text-blue-900">
+                                                    {reportMonth && reportYear
+                                                        ? '📊 El reporte incluirá todos los datos del mes completo seleccionado'
+                                                        : '💡 Selecciona ambos campos para filtrar por periodo específico'}
+                                                </p>
+                                                {reportMonth && reportYear && (
+                                                    <p className="text-xs text-blue-700 mt-1">
+                                                        Desde el día 1 a las 00:00 hasta el último día a las 23:59
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
-                                <div className="flex gap-2">
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-3 lg:flex-col">
                                     {(reportMonth || reportYear) && (
                                         <button
                                             onClick={() => {
                                                 setReportMonth('');
                                                 setReportYear('');
                                             }}
-                                            className="bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium flex items-center whitespace-nowrap"
+                                            className="group relative px-5 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:border-red-300 hover:bg-red-50 transition-all duration-200 text-sm font-semibold flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                                         >
-                                            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-4 h-4 text-gray-500 group-hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            Limpiar
+                                            <span className="group-hover:text-red-700">Limpiar Filtros</span>
                                         </button>
                                     )}
                                     <button
                                         onClick={generatePDF}
-                                        className="bg-green-600 text-white px-4 py-2.5 rounded-lg shadow-md hover:bg-green-700 hover:shadow-lg transition-all flex items-center justify-center text-sm font-medium whitespace-nowrap"
+                                        className="group relative px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 text-sm font-bold flex items-center justify-center gap-2.5 overflow-hidden"
                                     >
-                                        <svg className="w-4 h-4 md:w-5 md:h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        {/* Shine effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+
+                                        <svg className="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
-                                        <span className="hidden sm:inline">Descargar Reporte PDF</span>
-                                        <span className="sm:hidden">PDF</span>
+                                        <span className="relative z-10">Descargar PDF</span>
                                     </button>
                                 </div>
                             </div>
